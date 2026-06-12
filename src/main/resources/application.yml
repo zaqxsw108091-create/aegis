@@ -1,0 +1,34 @@
+spring:
+  application:
+    name: aegis
+  datasource:
+    url: jdbc:h2:mem:aegis;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+  h2:
+    console:
+      enabled: true   # 개발용. 운영에서는 반드시 끌 것
+
+# 보안 관련 커스텀 설정 (단계별로 사용)
+aegis:
+  security:
+    jwt:
+      # 운영에서는 환경변수로 주입. 절대 평문 커밋 금지.
+      secret: ${AEGIS_JWT_SECRET:dev-only-change-me-in-production-32bytes-min}
+      expiration-minutes: 30
+    lockout:
+      max-failed-attempts: 5
+      lock-minutes: 15
+    rate-limit:
+      requests-per-minute: 60
+    bruteforce:
+      ip-fail-threshold: 10
+      ip-block-minutes: 10
+
+server:
+  port: 8080
