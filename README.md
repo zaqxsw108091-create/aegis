@@ -18,13 +18,14 @@
 |---|---|:---:|
 | P0 | 프로젝트 골격 | ✅ |
 | P1 | 프로덕션 기반 인프라(프로파일·Flyway·Actuator/Prometheus·JSON 로깅·OpenAPI·전역 예외) | ✅ |
-| P2 | 인증(User·해싱·회원가입/로그인·JWT·계정 잠금) | ⬜ 예정 |
+| P2 | 인증(User·BCrypt(12)·회원가입/로그인·JWT Access+Refresh·계정 잠금·권한) | ✅ |
 | P3 | 탐지(무차별 대입 차단·IP 블록·레이트 리미팅·감사) | ✅ |
 | P4 | 방어(보안 헤더·CSRF·입력검증·SQLi/XSS 점검·AuditLog) | ✅ |
 | P5 | 대시보드(통계 API·관리자 화면) | ⬜ 예정 |
 | P6 | 마무리(테스트 보강·README 한/영/일) | ⬜ 예정 |
 
 ## 구현된 기능 (현재)
+- **인증/인가**: 회원가입·로그인 REST API, 비밀번호 BCrypt(strength 12) 해싱, JWT Access+Refresh 토큰(만료/갱신), 로그인 5회 실패 시 계정 15분 잠금, 역할 기반 접근(ROLE_USER/ROLE_ADMIN).
 - **프로파일 분리**: dev(H2) / prod(PostgreSQL, 접속정보·시크릿은 환경변수). 스키마는 Flyway 전용, JPA는 `ddl-auto=validate`.
 - **모니터링**: Actuator는 `health/info/prometheus`만 노출 + 인증 필요. 비인증 공개 헬스체크는 `/health`.
 - **API 문서**: springdoc-openapi (`/swagger-ui.html`).
@@ -55,15 +56,18 @@ java -jar build/libs/*.jar --spring.profiles.active=prod
 | 메서드 | 경로 | 접근 |
 |---|---|---|
 | GET | `/health` | 공개 |
+| POST | `/api/auth/signup` `/api/auth/login` `/api/auth/refresh` | 공개 |
+| GET | `/api/me` | 인증 필요(Bearer) |
+| GET | `/api/admin/ping` | ROLE_ADMIN |
 | GET | `/actuator/health` `/actuator/info` `/actuator/prometheus` | 인증 필요 |
 | GET | `/swagger-ui.html` | API 문서 |
 
 ## 패키지 구조 (`com.aegis`)
+- `auth` 인증/JWT/계정 잠금/권한
 - `detection` 무차별 대입 탐지 · IP 차단 · 레이트 리미팅
 - `security` 보안 설정 · 필터 · 헤더 · CSRF
 - `audit` 보안 이벤트 감사 로그(AuditLog)
 - `common` 공통(전역 예외처리, 에러 응답 DTO)
-- `auth` *(예정)* 인증/JWT/계정 잠금
 - `dashboard` *(예정)* 모니터링 API · 관리자 화면
 
 ## 문서
