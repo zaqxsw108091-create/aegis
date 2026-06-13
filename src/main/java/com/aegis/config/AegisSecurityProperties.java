@@ -9,23 +9,37 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
  */
 @ConfigurationProperties(prefix = "aegis.security")
 public record AegisSecurityProperties(
+        @DefaultValue Jwt jwt,
+        @DefaultValue Lockout lockout,
         @DefaultValue Bruteforce bruteforce,
         @DefaultValue RateLimit rateLimit
 ) {
     /**
-     * @param ipFailThreshold     차단 임계치(이 횟수 이상 실패 시 차단)
-     * @param ipBlockMinutes      차단 유지 시간(분)
-     * @param ipFailWindowMinutes 실패 집계 시간창(분)
+     * @param secret                  HMAC 서명 키(>=32바이트). 운영은 환경변수로 주입.
+     * @param expirationMinutes       Access 토큰 만료(분)
+     * @param refreshExpirationMinutes Refresh 토큰 만료(분)
      */
+    public record Jwt(
+            @DefaultValue("dev-only-change-me-in-production-32bytes-min") String secret,
+            @DefaultValue("30") long expirationMinutes,
+            @DefaultValue("10080") long refreshExpirationMinutes
+    ) {}
+
+    /**
+     * @param maxFailedAttempts 계정 잠금 임계 실패 횟수
+     * @param lockMinutes       잠금 유지 시간(분)
+     */
+    public record Lockout(
+            @DefaultValue("5") int maxFailedAttempts,
+            @DefaultValue("15") int lockMinutes
+    ) {}
+
     public record Bruteforce(
             @DefaultValue("10") int ipFailThreshold,
             @DefaultValue("10") int ipBlockMinutes,
             @DefaultValue("10") int ipFailWindowMinutes
     ) {}
 
-    /**
-     * @param requestsPerMinute IP당 분당 허용 요청 수
-     */
     public record RateLimit(
             @DefaultValue("60") int requestsPerMinute
     ) {}

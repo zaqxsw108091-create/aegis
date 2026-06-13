@@ -49,6 +49,7 @@ aegis:
       # dev 기본값. 운영(prod)에서는 환경변수로 반드시 덮어쓴다. 평문 커밋 금지.
       secret: ${AEGIS_JWT_SECRET:dev-only-change-me-in-production-32bytes-min}
       expiration-minutes: 30
+      refresh-expiration-minutes: 10080   # 7일
     lockout:
       max-failed-attempts: 5
       lock-minutes: 15
