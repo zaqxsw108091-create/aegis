@@ -25,16 +25,31 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
 
-    // JWT (P1)
+    // 운영 기반 - 모니터링/메트릭 (Actuator + Prometheus)
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'io.micrometer:micrometer-registry-prometheus'
+
+    // 운영 기반 - DB 스키마 마이그레이션 (Flyway)
+    implementation 'org.flywaydb:flyway-core'
+    implementation 'org.flywaydb:flyway-database-postgresql'
+
+    // 운영 기반 - 구조적(JSON) 로깅 (prod 프로파일)
+    implementation 'net.logstash.logback:logstash-logback-encoder:7.4'
+
+    // 운영 기반 - API 문서화 (OpenAPI/Swagger UI)
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0'
+
+    // JWT (P2 인증)
     implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
 
-    // 레이트 리미팅 (P2)
+    // 레이트 리미팅 (P3)
     implementation 'com.bucket4j:bucket4j-core:8.10.1'
 
-    // DB
+    // DB 드라이버 - dev(H2) / prod(PostgreSQL)
     runtimeOnly 'com.h2database:h2'
+    runtimeOnly 'org.postgresql:postgresql'
 
     // 테스트
     testImplementation 'org.springframework.boot:spring-boot-starter-test'

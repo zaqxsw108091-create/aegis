@@ -1,24 +1,48 @@
 spring:
   application:
     name: aegis
-  datasource:
-    url: jdbc:h2:mem:aegis;DB_CLOSE_DELAY=-1
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
+  # 기본 활성 프로파일은 dev (운영은 --spring.profiles.active=prod 로 띄운다)
+  profiles:
+    default: dev
   jpa:
+    open-in-view: false
     hibernate:
-      ddl-auto: update
-    show-sql: false
-  h2:
-    console:
-      enabled: true   # 개발용. 운영에서는 반드시 끌 것
+      # 스키마는 Flyway로만 관리한다. Hibernate는 검증만 (자동 생성/변경 금지).
+      ddl-auto: validate
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+# Actuator: health/info/prometheus 만 노출하고 나머지는 막는다.
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+# OpenAPI / Swagger UI
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
 
 # 보안 관련 커스텀 설정 (단계별로 사용)
 aegis:
   security:
     jwt:
-      # 운영에서는 환경변수로 주입. 절대 평문 커밋 금지.
+      # dev 기본값. 운영(prod)에서는 환경변수로 반드시 덮어쓴다. 평문 커밋 금지.
       secret: ${AEGIS_JWT_SECRET:dev-only-change-me-in-production-32bytes-min}
       expiration-minutes: 30
     lockout:

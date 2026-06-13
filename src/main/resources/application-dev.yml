@@ -1,0 +1,12 @@
+# 개발 프로파일: 인메모리 H2
+spring:
+  datasource:
+    url: jdbc:h2:mem:aegis;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    show-sql: true
+  h2:
+    console:
+      enabled: true   # 개발 전용. 운영에서는 비활성.

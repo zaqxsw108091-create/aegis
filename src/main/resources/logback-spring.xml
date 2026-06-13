@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+    <!-- dev/기본: 사람이 읽기 좋은 평문 콘솔 로그 -->
+    <springProfile name="!prod">
+        <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+    </springProfile>
+
+    <!-- prod: 구조적 JSON 로그 (logstash-logback-encoder) -->
+    <springProfile name="prod">
+        <appender name="JSON" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+                <includeMdcKeyName>traceId</includeMdcKeyName>
+                <includeMdcKeyName>userId</includeMdcKeyName>
+                <!--
+                  민감정보 마스킹: 로그 JSON에 아래 키가 보이면 값을 가린다.
+                  (비밀번호/토큰/시크릿이 구조적 로그로 새는 것을 1차 방어)
+                -->
+                <jsonGeneratorDecorator class="net.logstash.logback.mask.MaskingJsonGeneratorDecorator">
+                    <defaultMask>****</defaultMask>
+                    <path>password</path>
+                    <path>passwd</path>
+                    <path>secret</path>
+                    <path>token</path>
+                    <path>accessToken</path>
+                    <path>refreshToken</path>
+                    <path>authorization</path>
+                    <path>Authorization</path>
+                    <path>apiKey</path>
+                </jsonGeneratorDecorator>
+            </encoder>
+        </appender>
+        <root level="INFO">
+            <appender-ref ref="JSON"/>
+        </root>
+    </springProfile>
+</configuration>

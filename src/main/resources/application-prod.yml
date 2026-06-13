@@ -1,0 +1,18 @@
+# 운영 프로파일: PostgreSQL. 접속정보·시크릿은 환경변수로만 주입한다(평문 커밋 금지).
+spring:
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:aegis}
+    driver-class-name: org.postgresql.Driver
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  jpa:
+    show-sql: false
+  h2:
+    console:
+      enabled: false
+
+aegis:
+  security:
+    jwt:
+      # 운영에서는 기본값 없이 환경변수 필수.
+      secret: ${AEGIS_JWT_SECRET}
