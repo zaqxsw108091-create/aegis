@@ -1,7 +1,8 @@
 package com.aegis.detection;
 
-import com.aegis.audit.SecurityEventService;
-import com.aegis.audit.SecurityEventType;
+import com.aegis.audit.AuditEventType;
+import com.aegis.audit.AuditResult;
+import com.aegis.audit.AuditService;
 import com.aegis.common.error.ErrorResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
@@ -23,11 +24,11 @@ public class RateLimitFilter extends OncePerRequestFilter {
     private static final Logger log = LoggerFactory.getLogger(RateLimitFilter.class);
 
     private final RateLimitService rateLimitService;
-    private final SecurityEventService events;
+    private final AuditService events;
     private final ObjectMapper objectMapper;
 
     public RateLimitFilter(RateLimitService rateLimitService,
-                           SecurityEventService events,
+                           AuditService events,
                            ObjectMapper objectMapper) {
         this.rateLimitService = rateLimitService;
         this.events = events;
@@ -42,7 +43,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
         if (!rateLimitService.tryConsume(ip)) {
             log.warn("[RATE-LIMIT] 한도 초과 ip={} uri={}", ip, request.getRequestURI());
             if (rateLimitService.shouldRecordRejection(ip)) {
-                events.record(SecurityEventType.RATE_LIMITED, ip,
+                events.record(AuditEventType.RATE_LIMITED, AuditResult.BLOCKED, ip,
                         "분당 " + rateLimitService.getRequestsPerMinute() + "회 초과");
             }
             response.setStatus(429); // 429 Too Many Requests

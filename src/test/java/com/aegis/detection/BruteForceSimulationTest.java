@@ -1,7 +1,7 @@
 package com.aegis.detection;
 
-import com.aegis.audit.SecurityEventRepository;
-import com.aegis.audit.SecurityEventType;
+import com.aegis.audit.AuditEventType;
+import com.aegis.audit.AuditLogRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,12 +36,12 @@ class BruteForceSimulationTest {
     private BlockedIpRepository blockedIpRepository;
 
     @Autowired
-    private SecurityEventRepository securityEventRepository;
+    private AuditLogRepository auditLogRepository;
 
     @BeforeEach
     void clean() {
         blockedIpRepository.deleteAll();
-        securityEventRepository.deleteAll();
+        auditLogRepository.deleteAll();
     }
 
     private RequestPostProcessor fromIp(String ip) {
@@ -65,8 +65,8 @@ class BruteForceSimulationTest {
         assertThat(blockedIpRepository.existsByIpAndBlockedUntilAfter(ATTACKER_IP, LocalDateTime.now()))
                 .as("임계치 초과 후 공격자 IP가 차단되어야 한다")
                 .isTrue();
-        assertThat(securityEventRepository.countByTypeAndIpAndCreatedAtAfter(
-                SecurityEventType.IP_BLOCKED, ATTACKER_IP, LocalDateTime.now().minusMinutes(1)))
+        assertThat(auditLogRepository.countByTypeAndIpAndCreatedAtAfter(
+                AuditEventType.IP_BLOCKED, ATTACKER_IP, LocalDateTime.now().minusMinutes(1)))
                 .as("IP_BLOCKED 이벤트가 DB에 기록되어야 한다")
                 .isGreaterThan(0);
 

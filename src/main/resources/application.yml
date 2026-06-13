@@ -4,6 +4,10 @@ spring:
   # 기본 활성 프로파일은 dev (운영은 --spring.profiles.active=prod 로 띄운다)
   profiles:
     default: dev
+  jackson:
+    deserialization:
+      # 화이트리스트: 정의되지 않은(예상치 못한) JSON 필드가 오면 요청을 거부한다.
+      fail-on-unknown-properties: true
   jpa:
     open-in-view: false
     hibernate:

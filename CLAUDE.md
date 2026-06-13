@@ -67,6 +67,6 @@
 - [x] P1 프로덕션 기반 인프라: 프로파일 분리, Flyway, Actuator/Prometheus, JSON 로깅, OpenAPI, 전역 예외처리
 - [ ] P2 인증: User 엔티티, 해싱, 회원가입/로그인, JWT, 계정 잠금
 - [x] P3 탐지: 무차별 대입 탐지(인증 실패 이벤트 집계), IP 자동 차단(403), Bucket4j 레이트 리미팅(429), 보안 이벤트 감사 로그(콘솔+DB)
-- [ ] P4 방어: 보안 헤더, CSRF, 입력검증 강화, SQLi/XSS 점검, 감사 로그
+- [x] P4 방어: 보안 헤더(CSP/X-Frame-Options/HSTS 등), CSRF 활성화, 입력검증 강화(화이트리스트), SQLi/XSS 점검, 감사 로그(AuditLog). 정책 문서: docs/SECURITY.md
 - [ ] P5 대시보드: 보안 이벤트/차단 IP/실패 통계 API + 관리자 화면
 - [ ] P6 마무리: 테스트 보강, README(한/영/일 요약)

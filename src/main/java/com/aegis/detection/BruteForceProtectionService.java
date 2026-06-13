@@ -1,7 +1,8 @@
 package com.aegis.detection;
 
-import com.aegis.audit.SecurityEventService;
-import com.aegis.audit.SecurityEventType;
+import com.aegis.audit.AuditEventType;
+import com.aegis.audit.AuditResult;
+import com.aegis.audit.AuditService;
 import com.aegis.config.AegisSecurityProperties;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,11 +16,11 @@ import java.time.LocalDateTime;
 @Service
 public class BruteForceProtectionService {
 
-    private final SecurityEventService events;
+    private final AuditService events;
     private final BlockedIpRepository blockedIpRepository;
     private final AegisSecurityProperties props;
 
-    public BruteForceProtectionService(SecurityEventService events,
+    public BruteForceProtectionService(AuditService events,
                                        BlockedIpRepository blockedIpRepository,
                                        AegisSecurityProperties props) {
         this.events = events;
@@ -33,11 +34,11 @@ public class BruteForceProtectionService {
         if (ip == null || ip.isBlank()) {
             return;
         }
-        events.record(SecurityEventType.LOGIN_FAILURE, ip, "username=" + safe(username));
+        events.record(AuditEventType.LOGIN_FAILURE, AuditResult.FAILURE, ip, "username=" + safe(username));
 
         AegisSecurityProperties.Bruteforce bf = props.bruteforce();
         LocalDateTime windowStart = LocalDateTime.now().minusMinutes(bf.ipFailWindowMinutes());
-        long recentFailures = events.countSince(SecurityEventType.LOGIN_FAILURE, ip, windowStart);
+        long recentFailures = events.countSince(AuditEventType.LOGIN_FAILURE, ip, windowStart);
 
         if (recentFailures >= bf.ipFailThreshold() && !isBlocked(ip)) {
             block(ip, "brute-force 탐지: " + bf.ipFailWindowMinutes() + "분 내 실패 " + recentFailures + "회");
@@ -57,7 +58,7 @@ public class BruteForceProtectionService {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime until = now.plusMinutes(props.bruteforce().ipBlockMinutes());
         blockedIpRepository.save(new BlockedIp(ip, reason, now, until));
-        events.record(SecurityEventType.IP_BLOCKED, ip, reason + " (해제 예정 " + until + ")");
+        events.record(AuditEventType.IP_BLOCKED, AuditResult.BLOCKED, ip, reason + " (해제 예정 " + until + ")");
     }
 
     /** 사용자명 로깅 시 과도한 길이/개행 차단. 비밀번호 등 민감정보는 애초에 전달하지 않는다. */

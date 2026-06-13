@@ -1,13 +1,17 @@
 package com.aegis.audit;
 
 /**
- * 보안 감사 이벤트 종류.
+ * 감사 로그 이벤트 종류.
  */
-public enum SecurityEventType {
+public enum AuditEventType {
+    /** 로그인(인증) 성공 */
+    LOGIN_SUCCESS,
     /** 로그인(인증) 실패 */
     LOGIN_FAILURE,
     /** 무차별 대입 탐지로 IP 차단 */
     IP_BLOCKED,
     /** 레이트 리미트 초과로 요청 거부 */
-    RATE_LIMITED
+    RATE_LIMITED,
+    /** 권한 거부(인가 실패) */
+    ACCESS_DENIED
 }
