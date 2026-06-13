@@ -53,6 +53,7 @@ aegis:
     bruteforce:
       ip-fail-threshold: 10
       ip-block-minutes: 10
+      ip-fail-window-minutes: 10
 
 server:
   port: 8080

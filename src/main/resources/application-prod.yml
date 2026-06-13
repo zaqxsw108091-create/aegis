@@ -11,6 +11,10 @@ spring:
     console:
       enabled: false
 
+# 프록시(예: nginx) 뒤에서 X-Forwarded-* 를 반영해 실제 클라이언트 IP로 차단/집계되게 한다.
+server:
+  forward-headers-strategy: framework
+
 aegis:
   security:
     jwt:
