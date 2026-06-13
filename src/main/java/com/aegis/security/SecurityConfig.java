@@ -3,10 +3,13 @@ package com.aegis.security;
 import com.aegis.audit.AuditService;
 import com.aegis.auth.JwtAuthenticationFilter;
 import com.aegis.auth.JwtService;
+import com.aegis.config.AegisSecurityProperties;
 import com.aegis.detection.BruteForceProtectionService;
+import com.aegis.detection.DetectionMetrics;
 import com.aegis.detection.IpBlockFilter;
+import com.aegis.detection.IpWhitelist;
 import com.aegis.detection.RateLimitFilter;
-import com.aegis.detection.RateLimitService;
+import com.aegis.detection.RateLimiter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
@@ -51,12 +54,16 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http,
                                            BruteForceProtectionService protection,
-                                           RateLimitService rateLimitService,
+                                           RateLimiter rateLimiter,
+                                           IpWhitelist ipWhitelist,
+                                           DetectionMetrics detectionMetrics,
+                                           AegisSecurityProperties props,
                                            AuditService auditService,
                                            JwtService jwtService,
                                            ObjectMapper objectMapper) throws Exception {
-        IpBlockFilter ipBlockFilter = new IpBlockFilter(protection, objectMapper);
-        RateLimitFilter rateLimitFilter = new RateLimitFilter(rateLimitService, auditService, objectMapper);
+        IpBlockFilter ipBlockFilter = new IpBlockFilter(protection, ipWhitelist, objectMapper);
+        RateLimitFilter rateLimitFilter = new RateLimitFilter(rateLimiter, ipWhitelist, auditService,
+                detectionMetrics, objectMapper, props.rateLimit().requestsPerMinute());
         JwtAuthenticationFilter jwtFilter = new JwtAuthenticationFilter(jwtService);
         AuditingAccessDeniedHandler accessDeniedHandler =
                 new AuditingAccessDeniedHandler(auditService, objectMapper);

@@ -45,6 +45,8 @@ springdoc:
 # 보안 관련 커스텀 설정 (단계별로 사용)
 aegis:
   security:
+    # 차단/레이트리밋 면제 IP(정확 일치). 예: ["127.0.0.1", "10.0.0.5"]
+    whitelist: []
     jwt:
       # dev 기본값. 운영(prod)에서는 환경변수로 반드시 덮어쓴다. 평문 커밋 금지.
       secret: ${AEGIS_JWT_SECRET:dev-only-change-me-in-production-32bytes-min}

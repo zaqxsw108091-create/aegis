@@ -17,10 +17,14 @@ import java.io.IOException;
 public class IpBlockFilter extends OncePerRequestFilter {
 
     private final BruteForceProtectionService protection;
+    private final IpWhitelist whitelist;
     private final ObjectMapper objectMapper;
 
-    public IpBlockFilter(BruteForceProtectionService protection, ObjectMapper objectMapper) {
+    public IpBlockFilter(BruteForceProtectionService protection,
+                         IpWhitelist whitelist,
+                         ObjectMapper objectMapper) {
         this.protection = protection;
+        this.whitelist = whitelist;
         this.objectMapper = objectMapper;
     }
 
@@ -29,6 +33,11 @@ public class IpBlockFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
         String ip = request.getRemoteAddr();
+        // 화이트리스트 IP는 차단 검사를 건너뛴다.
+        if (whitelist.isWhitelisted(ip)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
         if (protection.isBlocked(ip)) {
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             response.setContentType(MediaType.APPLICATION_JSON_VALUE);

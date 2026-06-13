@@ -18,13 +18,19 @@ public class BruteForceProtectionService {
 
     private final AuditService events;
     private final BlockedIpRepository blockedIpRepository;
+    private final IpWhitelist whitelist;
+    private final DetectionMetrics metrics;
     private final AegisSecurityProperties props;
 
     public BruteForceProtectionService(AuditService events,
                                        BlockedIpRepository blockedIpRepository,
+                                       IpWhitelist whitelist,
+                                       DetectionMetrics metrics,
                                        AegisSecurityProperties props) {
         this.events = events;
         this.blockedIpRepository = blockedIpRepository;
+        this.whitelist = whitelist;
+        this.metrics = metrics;
         this.props = props;
     }
 
@@ -35,6 +41,12 @@ public class BruteForceProtectionService {
             return;
         }
         events.record(AuditEventType.LOGIN_FAILURE, AuditResult.FAILURE, ip, "username=" + safe(username));
+        metrics.loginFailure();
+
+        // 화이트리스트 IP는 집계는 하되 차단하지 않는다.
+        if (whitelist.isWhitelisted(ip)) {
+            return;
+        }
 
         AegisSecurityProperties.Bruteforce bf = props.bruteforce();
         LocalDateTime windowStart = LocalDateTime.now().minusMinutes(bf.ipFailWindowMinutes());
@@ -45,10 +57,10 @@ public class BruteForceProtectionService {
         }
     }
 
-    /** 현재 차단 상태 여부. */
+    /** 현재 차단 상태 여부. 화이트리스트 IP는 항상 false. */
     @Transactional(readOnly = true)
     public boolean isBlocked(String ip) {
-        if (ip == null || ip.isBlank()) {
+        if (ip == null || ip.isBlank() || whitelist.isWhitelisted(ip)) {
             return false;
         }
         return blockedIpRepository.existsByIpAndBlockedUntilAfter(ip, LocalDateTime.now());
@@ -59,6 +71,7 @@ public class BruteForceProtectionService {
         LocalDateTime until = now.plusMinutes(props.bruteforce().ipBlockMinutes());
         blockedIpRepository.save(new BlockedIp(ip, reason, now, until));
         events.record(AuditEventType.IP_BLOCKED, AuditResult.BLOCKED, ip, reason + " (해제 예정 " + until + ")");
+        metrics.ipBlocked();
     }
 
     /** 사용자명 로깅 시 과도한 길이/개행 차단. 비밀번호 등 민감정보는 애초에 전달하지 않는다. */

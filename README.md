@@ -30,7 +30,7 @@
 - **모니터링**: Actuator는 `health/info/prometheus`만 노출 + 인증 필요. 비인증 공개 헬스체크는 `/health`.
 - **API 문서**: springdoc-openapi (`/swagger-ui.html`).
 - **일관 에러 응답**: `@RestControllerAdvice`(`ErrorResponse`: timestamp/status/code/message), 스택트레이스·내부 메시지 비노출.
-- **탐지**: 로그인 실패를 IP 단위로 집계 → 임계치(기본 10회/10분) 초과 시 자동 차단(403), Bucket4j로 IP당 분당 60회 레이트 리밋(429).
+- **탐지**: 로그인 실패를 IP 단위로 집계 → 임계치(기본 10회/10분) 초과 시 자동 차단(403)·자동 만료, Bucket4j로 IP당 분당 60회 레이트 리밋(429). 예외 IP 화이트리스트, 레이트리미터 추상화(분산 환경 대비), 탐지/차단 Micrometer 메트릭(`/actuator/prometheus`).
 - **방어**: 보안 헤더(CSP·X-Frame-Options·HSTS·X-Content-Type-Options·Referrer-Policy), CSRF 활성화, 입력 화이트리스트(미정의 JSON 필드 거부).
 - **감사(AuditLog)**: 보안 이벤트(로그인 성공/실패·IP 차단·레이트리밋·권한거부)를 **시각/IP/이벤트유형/결과**로 콘솔과 DB에 기록.
 - **SQL**: 전부 JPA 파라미터 바인딩(원시 SQL/문자열 결합 없음). 정책: [docs/SECURITY.md](docs/SECURITY.md).
