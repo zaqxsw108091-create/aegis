@@ -34,11 +34,19 @@
 
 ## 5. 감사 로깅 (AuditLog)
 - 보안 이벤트를 `audit_log` 테이블과 콘솔에 동시에 기록한다.
-- 기록 항목: **시각(createdAt) / IP / 이벤트유형(type) / 결과(result)** + 부가 detail.
+- 기록 항목: **시각(createdAt) / 행위자(actor) / IP / 이벤트유형(type) / 결과(result)** + 부가 detail.
 - 이벤트유형: `LOGIN_SUCCESS, LOGIN_FAILURE, IP_BLOCKED, RATE_LIMITED, ACCESS_DENIED`
 - 결과: `SUCCESS, FAILURE, BLOCKED, DENIED`
-- **비밀번호/토큰/시크릿은 감사 로그·콘솔에 절대 기록하지 않는다.**
+- **append-only(변경 불가) 정책**: 엔티티는 `@Immutable` + setter 없음으로 INSERT 후 수정 불가
+  (Hibernate가 UPDATE SQL을 발행하지 않음). 애플리케이션 코드는 감사 로그를 수정/삭제하지 않는다.
+- **비밀번호/토큰/시크릿은 감사 로그·콘솔에 절대 기록하지 않는다.** (actor 에는 사용자명만, 비밀번호 금지)
 
 ## 6. 탐지/차단 (요약, 상세는 detection 모듈)
 - IP별 로그인 실패 집계 → 임계치 초과 시 자동 차단(403).
 - IP별 요청 레이트 리미팅(429).
+
+## 7. 도구 자체 보안 점검(self-review)
+- **시크릿 하드코딩 없음**: JWT 시크릿(`AEGIS_JWT_SECRET`), DB 접속정보는 prod에서 환경변수(`${...}`)로만
+  주입. 소스/깃에 평문 시크릿 없음(`gradle.properties`는 머신 경로용이며 gitignore).
+- **Actuator 보호**: `/actuator/**` 인증 필요, `health/info/prometheus` 만 노출. 비인증 공개는 커스텀 `/health` 만.
+- **에러 민감정보 비노출**: 전역/인증 예외 핸들러가 스택트레이스·내부 메시지를 응답에 담지 않고 일반 메시지로 응답.

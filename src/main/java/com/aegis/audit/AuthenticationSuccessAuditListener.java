@@ -28,6 +28,6 @@ public class AuthenticationSuccessAuditListener
         String ip = (auth != null && auth.getDetails() instanceof WebAuthenticationDetails details)
                 ? details.getRemoteAddress() : null;
         String username = (auth != null) ? String.valueOf(auth.getName()) : "(unknown)";
-        auditService.record(AuditEventType.LOGIN_SUCCESS, AuditResult.SUCCESS, ip, "username=" + username);
+        auditService.record(AuditEventType.LOGIN_SUCCESS, AuditResult.SUCCESS, username, ip, "로그인 성공");
     }
 }

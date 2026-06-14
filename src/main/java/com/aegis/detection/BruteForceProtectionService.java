@@ -40,7 +40,7 @@ public class BruteForceProtectionService {
         if (ip == null || ip.isBlank()) {
             return;
         }
-        events.record(AuditEventType.LOGIN_FAILURE, AuditResult.FAILURE, ip, "username=" + safe(username));
+        events.record(AuditEventType.LOGIN_FAILURE, AuditResult.FAILURE, safe(username), ip, "로그인 실패");
         metrics.loginFailure();
 
         // 화이트리스트 IP는 집계는 하되 차단하지 않는다.
@@ -70,7 +70,7 @@ public class BruteForceProtectionService {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime until = now.plusMinutes(props.bruteforce().ipBlockMinutes());
         blockedIpRepository.save(new BlockedIp(ip, reason, now, until));
-        events.record(AuditEventType.IP_BLOCKED, AuditResult.BLOCKED, ip, reason + " (해제 예정 " + until + ")");
+        events.record(AuditEventType.IP_BLOCKED, AuditResult.BLOCKED, "system", ip, reason + " (해제 예정 " + until + ")");
         metrics.ipBlocked();
     }
 

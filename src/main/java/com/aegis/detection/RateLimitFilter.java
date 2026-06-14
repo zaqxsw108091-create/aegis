@@ -67,7 +67,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
             metrics.rateLimited();
             log.warn("[RATE-LIMIT] 한도 초과 ip={} uri={}", ip, request.getRequestURI());
             if (shouldRecordRejection(ip)) {
-                events.record(AuditEventType.RATE_LIMITED, AuditResult.BLOCKED, ip,
+                events.record(AuditEventType.RATE_LIMITED, AuditResult.BLOCKED, null, ip,
                         "분당 " + permitsPerMinute + "회 초과");
             }
             response.setStatus(429); // 429 Too Many Requests

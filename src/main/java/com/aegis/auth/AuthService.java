@@ -84,7 +84,7 @@ public class AuthService {
         }
 
         loginAttemptService.onSuccess(user.getId());
-        auditService.record(AuditEventType.LOGIN_SUCCESS, AuditResult.SUCCESS, ip, "username=" + username);
+        auditService.record(AuditEventType.LOGIN_SUCCESS, AuditResult.SUCCESS, username, ip, "로그인 성공");
         return issueTokens(user);
     }
 

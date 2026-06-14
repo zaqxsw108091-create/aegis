@@ -10,6 +10,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.access.AccessDeniedHandler;
 
 import java.io.IOException;
@@ -32,7 +35,7 @@ public class AuditingAccessDeniedHandler implements AccessDeniedHandler {
                        HttpServletResponse response,
                        AccessDeniedException accessDeniedException) throws IOException, ServletException {
         String ip = request.getRemoteAddr();
-        auditService.record(AuditEventType.ACCESS_DENIED, AuditResult.DENIED, ip,
+        auditService.record(AuditEventType.ACCESS_DENIED, AuditResult.DENIED, currentActor(), ip,
                 request.getMethod() + " " + request.getRequestURI());
 
         response.setStatus(HttpServletResponse.SC_FORBIDDEN);
@@ -42,4 +45,14 @@ public class AuditingAccessDeniedHandler implements AccessDeniedHandler {
                 HttpServletResponse.SC_FORBIDDEN, "ACCESS_DENIED", "접근 권한이 없습니다.");
         objectMapper.writeValue(response.getWriter(), body);
     }
+
+    /** 현재 인증 주체(행위자). 익명/미인증이면 "anonymous". */
+    private String currentActor() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || auth instanceof AnonymousAuthenticationToken || !auth.isAuthenticated()) {
+            return "anonymous";
+        }
+        return auth.getName();
+    }
 }
+

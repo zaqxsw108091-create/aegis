@@ -61,6 +61,7 @@ class AuditLogTest {
         AuditLog row = logs.get(0);
         assertThat(row.getType()).isEqualTo(AuditEventType.LOGIN_FAILURE);
         assertThat(row.getResult()).isEqualTo(AuditResult.FAILURE);
+        assertThat(row.getActor()).isEqualTo("ghost");   // 행위자(시도한 사용자명)
         assertThat(row.getIp()).isEqualTo(ip);
         assertThat(row.getCreatedAt()).isNotNull();
     }
@@ -73,6 +74,7 @@ class AuditLogTest {
 
         assertThat(auditLogRepository.findAll())
                 .anyMatch(l -> l.getType() == AuditEventType.ACCESS_DENIED
-                        && l.getResult() == AuditResult.DENIED);
+                        && l.getResult() == AuditResult.DENIED
+                        && "tester".equals(l.getActor()));   // 행위자(인증 주체) 기록
     }
 }

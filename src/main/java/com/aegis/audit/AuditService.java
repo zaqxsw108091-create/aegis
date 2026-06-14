@@ -22,12 +22,12 @@ public class AuditService {
     }
 
     @Transactional
-    public AuditLog record(AuditEventType type, AuditResult result, String ip, String detail) {
-        AuditLog entry = repository.save(new AuditLog(type, result, ip, detail, LocalDateTime.now()));
+    public AuditLog record(AuditEventType type, AuditResult result, String actor, String ip, String detail) {
+        AuditLog entry = repository.save(new AuditLog(type, result, actor, ip, detail, LocalDateTime.now()));
         if (result == AuditResult.SUCCESS) {
-            log.info("[AUDIT] {} result={} ip={} detail={}", type, result, ip, detail);
+            log.info("[AUDIT] {} result={} actor={} ip={} detail={}", type, result, actor, ip, detail);
         } else {
-            log.warn("[AUDIT] {} result={} ip={} detail={}", type, result, ip, detail);
+            log.warn("[AUDIT] {} result={} actor={} ip={} detail={}", type, result, actor, ip, detail);
         }
         return entry;
     }
