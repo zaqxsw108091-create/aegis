@@ -21,7 +21,7 @@
 | P2 | 인증(User·BCrypt(12)·회원가입/로그인·JWT Access+Refresh·계정 잠금·권한) | ✅ |
 | P3 | 탐지(무차별 대입 차단·IP 블록·레이트 리미팅·감사) | ✅ |
 | P4 | 방어(보안 헤더·CSRF·입력검증·SQLi/XSS 점검·AuditLog) | ✅ |
-| P5 | 대시보드(통계 API·관리자 화면) | ⬜ 예정 |
+| P5 | 대시보드(관리자 전용 모니터링 API·Thymeleaf 화면·메트릭 연동) | ✅ |
 | P6 | 마무리(테스트 보강·README 한/영/일) | ⬜ 예정 |
 
 ## 구현된 기능 (현재)
@@ -58,6 +58,8 @@ java -jar build/libs/*.jar --spring.profiles.active=prod
 | GET | `/health` | 공개 |
 | POST | `/api/auth/signup` `/api/auth/login` `/api/auth/refresh` | 공개 |
 | GET | `/api/me` | 인증 필요(Bearer) |
+| GET | `/api/admin/dashboard/events` `/blocked-ips` `/stats` | ROLE_ADMIN |
+| GET | `/admin/dashboard` | ROLE_ADMIN (관리자 웹 화면) |
 | GET | `/api/admin/ping` | ROLE_ADMIN |
 | GET | `/actuator/health` `/actuator/info` `/actuator/prometheus` | 인증 필요 |
 | GET | `/swagger-ui.html` | API 문서 |
@@ -67,8 +69,8 @@ java -jar build/libs/*.jar --spring.profiles.active=prod
 - `detection` 무차별 대입 탐지 · IP 차단 · 레이트 리미팅
 - `security` 보안 설정 · 필터 · 헤더 · CSRF
 - `audit` 보안 이벤트 감사 로그(AuditLog)
+- `dashboard` 관리자 전용 모니터링 API · Thymeleaf 화면
 - `common` 공통(전역 예외처리, 에러 응답 DTO)
-- `dashboard` *(예정)* 모니터링 API · 관리자 화면
 
 ## 문서
 - 보안 정책(입력검증/출력인코딩/SQL/헤더/감사): [docs/SECURITY.md](docs/SECURITY.md)
