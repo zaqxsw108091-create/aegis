@@ -46,7 +46,8 @@
 - 실행(dev):  ./gradlew bootRun
 - 실행(prod): java -jar build/libs/*.jar --spring.profiles.active=prod   (환경변수 주입 필요)
 - 테스트: ./gradlew test
-- 빌드:   ./gradlew build
+- 빌드:   ./gradlew build   (JaCoCo 리포트: build/reports/jacoco)
+- 배포:   docker compose up --build   (app + postgres, AEGIS_JWT_SECRET/DB_PASSWORD 환경변수 주입)
 - 헬스체크: GET http://localhost:8080/health  -> {"status":"UP"}
 - 메트릭:  GET http://localhost:8080/actuator/prometheus  (인증 필요)
 - API 문서: http://localhost:8080/swagger-ui.html
@@ -71,4 +72,6 @@
 - [x] P3 탐지: 무차별 대입 탐지(인증 실패 이벤트 집계), IP 자동 차단(403)·자동 만료, Bucket4j 레이트 리미팅(429), IP 화이트리스트(면제), 레이트리미터 추상화(분산 대비), Micrometer 메트릭(/actuator/prometheus), 보안 이벤트 감사 로그(콘솔+DB)
 - [x] P4 방어: 보안 헤더(CSP/X-Frame-Options/HSTS 등), CSRF 활성화, 입력검증 강화(화이트리스트), SQLi/XSS 점검, 감사 로그(AuditLog). 정책 문서: docs/SECURITY.md
 - [x] P5 대시보드: 관리자(ROLE_ADMIN) 전용 모니터링 REST API(이벤트/차단IP/통계/메트릭) + Thymeleaf 관리자 화면
-- [ ] P6 마무리: 테스트 보강, README(한/영/일 요약)
+- [x] P6 릴리스 0.1.0: 전체 테스트(34)·JaCoCo 커버리지, 멀티스테이지 Dockerfile + docker-compose,
+      버전 0.1.0, 배포 가이드, README(한/영/일) 정비, SECURITY.md(범위·한계·책임 있는 사용)
+      · 후속(선택): CI(GitHub Actions)·Spotless/Checkstyle·OWASP dependency-check

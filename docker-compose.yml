@@ -1,0 +1,36 @@
+# Aegis 로컬/단일 호스트 배포용 compose (app + postgres).
+# 운영에서는 AEGIS_JWT_SECRET / DB_PASSWORD 를 반드시 강한 값으로 교체할 것.
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: aegis
+      POSTGRES_USER: aegis
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-aegis-local-pw}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aegis -d aegis"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  app:
+    build: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_NAME: aegis
+      DB_USERNAME: aegis
+      DB_PASSWORD: ${DB_PASSWORD:-aegis-local-pw}
+      # 운영에서는 반드시 교체 (32바이트 이상)
+      AEGIS_JWT_SECRET: ${AEGIS_JWT_SECRET:-change-me-in-production-please-32bytes-min}
+    ports:
+      - "8080:8080"
+
+volumes:
+  pgdata:

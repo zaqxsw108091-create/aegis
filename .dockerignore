@@ -1,0 +1,9 @@
+# 빌드 산출물/로컬 환경은 이미지에 넣지 않는다
+build/
+.gradle/
+.git/
+.idea/
+*.iml
+.vscode/
+# 머신 종속(JDK 경로 등) — 컨테이너 빌드에서 제외(중요)
+gradle.properties

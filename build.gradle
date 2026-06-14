@@ -2,10 +2,11 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.3.2'
     id 'io.spring.dependency-management' version '1.1.6'
+    id 'jacoco'
 }
 
 group = 'com.aegis'
-version = '0.0.1-SNAPSHOT'
+version = '0.1.0'
 
 java {
     toolchain {
@@ -58,4 +59,14 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+    finalizedBy tasks.named('jacocoTestReport')
+}
+
+// 커버리지 리포트(점검용). 임계치는 강제하지 않는다(빌드 실패 방지).
+tasks.named('jacocoTestReport') {
+    dependsOn tasks.named('test')
+    reports {
+        xml.required = true
+        html.required = true
+    }
 }
