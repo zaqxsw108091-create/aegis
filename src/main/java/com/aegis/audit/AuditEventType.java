@@ -13,5 +13,9 @@ public enum AuditEventType {
     /** 레이트 리미트 초과로 요청 거부 */
     RATE_LIMITED,
     /** 권한 거부(인가 실패) */
-    ACCESS_DENIED
+    ACCESS_DENIED,
+    /** 리프레시 토큰 재사용 감지(탈취 의심) → 전체 세션 폐기 */
+    TOKEN_REUSE,
+    /** 로그아웃(리프레시 토큰 폐기) */
+    LOGOUT
 }

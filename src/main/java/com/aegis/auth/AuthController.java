@@ -54,12 +54,23 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
-    @Operation(summary = "토큰 갱신", description = "유효한 Refresh 토큰으로 새 Access/Refresh 토큰을 발급한다.")
+    @Operation(summary = "토큰 갱신(회전)", description = "유효한 Refresh 토큰으로 새 Access/Refresh 토큰을 발급한다. "
+            + "Refresh 토큰은 1회용(회전)이며, 이미 사용된 토큰을 재사용하면 탈취로 간주해 전체 세션을 폐기한다.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "토큰 재발급"),
-            @ApiResponse(responseCode = "401", description = "유효하지 않은 리프레시 토큰")
+            @ApiResponse(responseCode = "401", description = "유효하지 않은/재사용된 리프레시 토큰")
     })
-    public TokenResponse refresh(@Valid @RequestBody RefreshRequest request) {
-        return authService.refresh(request.refreshToken());
+    public TokenResponse refresh(@Valid @RequestBody RefreshRequest request, HttpServletRequest http) {
+        return authService.refresh(request.refreshToken(), http.getRemoteAddr());
+    }
+
+    @PostMapping("/logout")
+    @Operation(summary = "로그아웃", description = "Refresh 토큰을 폐기한다(멱등). 이후 해당 토큰으로 갱신 불가.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "폐기 완료")
+    })
+    public ResponseEntity<Void> logout(@Valid @RequestBody RefreshRequest request, HttpServletRequest http) {
+        authService.logout(request.refreshToken(), http.getRemoteAddr());
+        return ResponseEntity.noContent().build();
     }
 }

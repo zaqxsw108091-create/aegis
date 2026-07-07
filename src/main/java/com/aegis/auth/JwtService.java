@@ -46,6 +46,8 @@ public class JwtService {
         Instant now = Instant.now();
         var builder = Jwts.builder()
                 .subject(subject)
+                // jti: 같은 초에 발급돼도 토큰이 항상 유일하도록(회전 저장소의 해시 충돌 방지)
+                .id(java.util.UUID.randomUUID().toString())
                 .claim("type", type)
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(now.plus(minutes, ChronoUnit.MINUTES)));
@@ -63,6 +65,10 @@ public class JwtService {
 
     public long getAccessExpirationMinutes() {
         return accessExpirationMinutes;
+    }
+
+    public long getRefreshExpirationMinutes() {
+        return refreshExpirationMinutes;
     }
 
     public boolean isAccessToken(Claims claims) {

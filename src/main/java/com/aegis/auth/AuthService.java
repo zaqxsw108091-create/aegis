@@ -32,19 +32,22 @@ public class AuthService {
     private final LoginAttemptService loginAttemptService;
     private final BruteForceProtectionService bruteForce;
     private final AuditService auditService;
+    private final RefreshTokenService refreshTokenService;
 
     public AuthService(UserRepository userRepository,
                        PasswordEncoder passwordEncoder,
                        JwtService jwtService,
                        LoginAttemptService loginAttemptService,
                        BruteForceProtectionService bruteForce,
-                       AuditService auditService) {
+                       AuditService auditService,
+                       RefreshTokenService refreshTokenService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.loginAttemptService = loginAttemptService;
         this.bruteForce = bruteForce;
         this.auditService = auditService;
+        this.refreshTokenService = refreshTokenService;
     }
 
     @Transactional
@@ -88,7 +91,7 @@ public class AuthService {
         return issueTokens(user);
     }
 
-    public TokenResponse refresh(String refreshToken) {
+    public TokenResponse refresh(String refreshToken, String ip) {
         Claims claims;
         try {
             claims = jwtService.parse(refreshToken);
@@ -103,12 +106,38 @@ public class AuthService {
         if (!user.isEnabled() || user.isLocked(LocalDateTime.now())) {
             throw new InvalidTokenException("토큰을 갱신할 수 없습니다.");
         }
+        // 회전(1회용): 저장소에서 소비. 서명은 유효한데 저장소에 없다 = 이미 사용/폐기된 토큰
+        // → 탈취 재사용 의심이므로 이 사용자의 모든 세션을 폐기한다.
+        if (!refreshTokenService.consume(refreshToken)) {
+            refreshTokenService.revokeAll(user.getUsername());
+            auditService.record(AuditEventType.TOKEN_REUSE, AuditResult.BLOCKED, user.getUsername(), ip,
+                    "리프레시 토큰 재사용 감지 - 전체 세션 폐기");
+            throw new InvalidTokenException("유효하지 않은 토큰입니다.");
+        }
         return issueTokens(user);
+    }
+
+    /** 로그아웃: 해당 refresh 토큰을 폐기한다(멱등). Access 토큰은 만료까지만 유효. */
+    public void logout(String refreshToken, String ip) {
+        Claims claims;
+        try {
+            claims = jwtService.parse(refreshToken);
+        } catch (Exception e) {
+            return; // 이미 무효한 토큰 → 폐기할 것 없음
+        }
+        if (!jwtService.isRefreshToken(claims)) {
+            return;
+        }
+        if (refreshTokenService.consume(refreshToken)) {
+            auditService.record(AuditEventType.LOGOUT, AuditResult.SUCCESS, claims.getSubject(), ip, "로그아웃");
+        }
     }
 
     private TokenResponse issueTokens(User user) {
         String access = jwtService.generateAccessToken(user.getUsername(), user.getRole());
         String refresh = jwtService.generateRefreshToken(user.getUsername());
+        refreshTokenService.store(user.getUsername(), refresh,
+                LocalDateTime.now().plusMinutes(jwtService.getRefreshExpirationMinutes()));
         return TokenResponse.bearer(access, refresh, jwtService.getAccessExpirationMinutes());
     }
 }
