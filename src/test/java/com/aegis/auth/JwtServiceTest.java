@@ -22,7 +22,8 @@ class JwtServiceTest {
                 new AegisSecurityProperties.Lockout(5, 15),
                 new AegisSecurityProperties.Bruteforce(10, 10, 10),
                 new AegisSecurityProperties.RateLimit(60),
-                List.of());
+                List.of(),
+                new AegisSecurityProperties.Alert(""));
         return new JwtService(props);
     }
 
@@ -64,7 +65,8 @@ class JwtServiceTest {
                 new AegisSecurityProperties.Lockout(5, 15),
                 new AegisSecurityProperties.Bruteforce(10, 10, 10),
                 new AegisSecurityProperties.RateLimit(60),
-                List.of());
+                List.of(),
+                new AegisSecurityProperties.Alert(""));
         JwtService b = new JwtService(props2);
 
         String tokenFromB = b.generateAccessToken("eve", Role.USER);

@@ -1,5 +1,6 @@
 package com.aegis.auth;
 
+import com.aegis.alert.AlertService;
 import com.aegis.audit.AuditEventType;
 import com.aegis.audit.AuditResult;
 import com.aegis.audit.AuditService;
@@ -33,6 +34,7 @@ public class AuthService {
     private final BruteForceProtectionService bruteForce;
     private final AuditService auditService;
     private final RefreshTokenService refreshTokenService;
+    private final AlertService alertService;
 
     public AuthService(UserRepository userRepository,
                        PasswordEncoder passwordEncoder,
@@ -40,7 +42,8 @@ public class AuthService {
                        LoginAttemptService loginAttemptService,
                        BruteForceProtectionService bruteForce,
                        AuditService auditService,
-                       RefreshTokenService refreshTokenService) {
+                       RefreshTokenService refreshTokenService,
+                       AlertService alertService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
@@ -48,6 +51,7 @@ public class AuthService {
         this.bruteForce = bruteForce;
         this.auditService = auditService;
         this.refreshTokenService = refreshTokenService;
+        this.alertService = alertService;
     }
 
     @Transactional
@@ -112,6 +116,7 @@ public class AuthService {
             refreshTokenService.revokeAll(user.getUsername());
             auditService.record(AuditEventType.TOKEN_REUSE, AuditResult.BLOCKED, user.getUsername(), ip,
                     "리프레시 토큰 재사용 감지 - 전체 세션 폐기");
+            alertService.notify("TOKEN_REUSE", "user=" + user.getUsername() + ", ip=" + ip + " (전체 세션 폐기)");
             throw new InvalidTokenException("유효하지 않은 토큰입니다.");
         }
         return issueTokens(user);

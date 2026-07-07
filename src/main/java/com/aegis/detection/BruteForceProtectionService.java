@@ -1,5 +1,6 @@
 package com.aegis.detection;
 
+import com.aegis.alert.AlertService;
 import com.aegis.audit.AuditEventType;
 import com.aegis.audit.AuditResult;
 import com.aegis.audit.AuditService;
@@ -20,17 +21,20 @@ public class BruteForceProtectionService {
     private final BlockedIpRepository blockedIpRepository;
     private final IpWhitelist whitelist;
     private final DetectionMetrics metrics;
+    private final AlertService alertService;
     private final AegisSecurityProperties props;
 
     public BruteForceProtectionService(AuditService events,
                                        BlockedIpRepository blockedIpRepository,
                                        IpWhitelist whitelist,
                                        DetectionMetrics metrics,
+                                       AlertService alertService,
                                        AegisSecurityProperties props) {
         this.events = events;
         this.blockedIpRepository = blockedIpRepository;
         this.whitelist = whitelist;
         this.metrics = metrics;
+        this.alertService = alertService;
         this.props = props;
     }
 
@@ -72,6 +76,7 @@ public class BruteForceProtectionService {
         blockedIpRepository.save(new BlockedIp(ip, reason, now, until));
         events.record(AuditEventType.IP_BLOCKED, AuditResult.BLOCKED, "system", ip, reason + " (해제 예정 " + until + ")");
         metrics.ipBlocked();
+        alertService.notify("IP_BLOCKED", "ip=" + ip + ", " + reason + ", 해제 예정 " + until);
     }
 
     /** 사용자명 로깅 시 과도한 길이/개행 차단. 비밀번호 등 민감정보는 애초에 전달하지 않는다. */

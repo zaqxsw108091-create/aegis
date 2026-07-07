@@ -16,8 +16,17 @@ public record AegisSecurityProperties(
         @DefaultValue Bruteforce bruteforce,
         @DefaultValue RateLimit rateLimit,
         // 차단/레이트리밋 면제 IP(정확 일치)
-        @DefaultValue List<String> whitelist
+        @DefaultValue List<String> whitelist,
+        @DefaultValue Alert alert
 ) {
+    /**
+     * @param webhookUrl 중대 보안 이벤트(IP 차단/토큰 재사용) 알림을 POST할 웹훅 URL.
+     *                   비어 있으면(기본) 알림 비활성.
+     */
+    public record Alert(
+            @DefaultValue("") String webhookUrl
+    ) {}
+
     /**
      * @param secret                  HMAC 서명 키(>=32바이트). 운영은 환경변수로 주입.
      * @param expirationMinutes       Access 토큰 만료(분)
