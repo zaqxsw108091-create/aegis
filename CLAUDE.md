@@ -72,6 +72,9 @@
 - [x] P3 탐지: 무차별 대입 탐지(인증 실패 이벤트 집계), IP 자동 차단(403)·자동 만료, Bucket4j 레이트 리미팅(429), IP 화이트리스트(면제), 레이트리미터 추상화(분산 대비), Micrometer 메트릭(/actuator/prometheus), 보안 이벤트 감사 로그(콘솔+DB)
 - [x] P4 방어: 보안 헤더(CSP/X-Frame-Options/HSTS 등), CSRF 활성화, 입력검증 강화(화이트리스트), SQLi/XSS 점검, 감사 로그(AuditLog). 정책 문서: docs/SECURITY.md
 - [x] P5 대시보드: 관리자(ROLE_ADMIN) 전용 모니터링 REST API(이벤트/차단IP/통계/메트릭) + Thymeleaf 관리자 화면
-- [x] P6 릴리스 0.1.0: 전체 테스트(34)·JaCoCo 커버리지, 멀티스테이지 Dockerfile + docker-compose,
+- [x] P6 릴리스 0.1.0: 전체 테스트·JaCoCo 커버리지, 멀티스테이지 Dockerfile + docker-compose,
       버전 0.1.0, 배포 가이드, README(한/영/일) 정비, SECURITY.md(범위·한계·책임 있는 사용)
-      · 후속(선택): CI(GitHub Actions)·Spotless/Checkstyle·OWASP dependency-check
+- [x] P7 CI/품질: GitHub Actions(빌드+테스트+리포트 아티팩트), OWASP dependency-check(주1회/수동, CVSS>=7)
+- [x] P8 토큰 수명주기: Refresh 회전(1회용)·재사용 감지 시 전체 세션 폐기(TOKEN_REUSE 감사)·로그아웃(/api/auth/logout)·jti. refresh_token 테이블(V6, SHA-256 해시만 저장)
+- [x] P9 보안 알림: IP 차단/토큰 재사용 시 웹훅 통지(AEGIS_ALERT_WEBHOOK, 기본 비활성, 비동기·실패 안전)
+      · 후속(선택): Spotless/Checkstyle, 분산 레이트리밋(Redis 구현체), 2FA(TOTP), 대시보드 그래프/수동 차단

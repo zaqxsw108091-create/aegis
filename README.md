@@ -57,8 +57,11 @@ HTTP 요청 → │ IpBlockFilter → RateLimitFilter → JwtAuthenticationFilte
 | P4 | 방어(보안 헤더·CSRF·입력검증·SQLi/XSS 점검·AuditLog 행위자/append-only) | ✅ |
 | P5 | 대시보드(관리자 전용 모니터링 API·Thymeleaf 화면·메트릭 연동) | ✅ |
 | P6 | 릴리스 0.1.0(테스트/커버리지·Docker·배포 가이드·문서 정비) | ✅ |
+| P7 | CI/품질(GitHub Actions 빌드+테스트, OWASP dependency-check 취약점 스캔) | ✅ |
+| P8 | 토큰 수명주기(Refresh 회전·재사용 감지 시 전체 폐기·로그아웃) | ✅ |
+| P9 | 보안 알림(IP 차단/토큰 재사용 → 웹훅 통지, 기본 비활성) | ✅ |
 
-> CI(GitHub Actions)·Spotless/Checkstyle·OWASP dependency-check 자동화는 후속 과제(선택).
+> 후속 과제(선택): Spotless/Checkstyle, 분산 레이트리밋(Redis), 2FA(TOTP), 대시보드 그래프/수동 차단.
 
 ## 빌드 · 실행 (개발)
 > **빌드에는 JDK 21 권장.** 시스템 JDK가 22+ 뿐이면 Gradle 8.7이 구동되지 않으니 JDK 21을 설치해 사용한다.
@@ -90,6 +93,7 @@ java -jar build/libs/aegis-0.1.0.jar \
 |---|---|
 | `DB_HOST` `DB_PORT` `DB_NAME` `DB_USERNAME` `DB_PASSWORD` | PostgreSQL 접속 정보 |
 | `AEGIS_JWT_SECRET` | JWT 서명 시크릿(32바이트 이상, 기본값 없음 — 필수) |
+| `AEGIS_ALERT_WEBHOOK` | (선택) IP 차단/토큰 재사용 알림 웹훅 URL. 비우면 알림 비활성 |
 
 ## 운영 시 주의
 - **dev 전용 기능은 prod에서 반드시 비활성**: H2 콘솔(dev만 enabled), dev 기본 JWT 시크릿은
@@ -104,7 +108,7 @@ java -jar build/libs/aegis-0.1.0.jar \
 | 메서드 | 경로 | 접근 |
 |---|---|---|
 | GET | `/health` | 공개 |
-| POST | `/api/auth/signup` `/api/auth/login` `/api/auth/refresh` | 공개 |
+| POST | `/api/auth/signup` `/api/auth/login` `/api/auth/refresh` `/api/auth/logout` | 공개 |
 | GET | `/api/me` | 인증(Bearer) |
 | GET | `/api/admin/dashboard/{events,blocked-ips,stats}` | ROLE_ADMIN |
 | GET | `/admin/dashboard` | ROLE_ADMIN (웹 화면) |
