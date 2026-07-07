@@ -1,0 +1,68 @@
+# Aegis CI: 커밋/PR마다 빌드+테스트를 자동 검증한다.
+# 테스트 실패 = 빌드 실패(머지 차단 근거). 리포트는 아티팩트로 업로드.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * 1'   # 매주 월요일 03:00 UTC 취약점 스캔
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Setup Gradle (캐시 포함)
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Build & Test
+        run: |
+          chmod +x gradlew
+          ./gradlew build --no-daemon
+
+      - name: Upload test report
+        if: always()   # 실패해도 리포트는 남긴다
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report
+          path: build/reports/tests/test
+
+      - name: Upload coverage report (JaCoCo)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-report
+          path: build/reports/jacoco
+
+  # 의존성 취약점 스캔: NVD 다운로드가 느리고 외부 API 의존이라 별도 잡으로 분리.
+  # 실패해도 빌드를 깨지 않되(continue-on-error) 리포트는 남긴다. 주 1회 + 수동 실행.
+  dependency-check:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: OWASP Dependency-Check
+        run: |
+          chmod +x gradlew
+          ./gradlew dependencyCheckAnalyze --no-daemon
+      - name: Upload dependency-check report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-check-report
+          path: build/reports/dependency-check
