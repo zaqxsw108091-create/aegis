@@ -120,6 +120,16 @@ java -jar build/libs/aegis-0.1.0.jar \
 `audit` 감사 로그(AuditLog) · `dashboard` 관리자 모니터링 · `common` 공통(전역 예외/에러 DTO)
 
 ## 문서
+**사용법 (한국어)**
+- 📘 **설치 → 실행 → 사용 설명서**: [docs/MANUAL.md](docs/MANUAL.md) ← 처음이라면 여기부터
+- 🧭 전체 구조·UI 한눈에 보기: [docs/OVERVIEW.md](docs/OVERVIEW.md)
+- 📚 기능 완전 정복(설명·발표용): [docs/STUDY_GUIDE.md](docs/STUDY_GUIDE.md)
+- 🧪 기능 시험 레시피: [docs/TEST_GUIDE.md](docs/TEST_GUIDE.md)
+
+**Usage (English)**
+- 📗 **Install → run → use → tune**: [docs/USAGE.en.md](docs/USAGE.en.md)
+
+**정책·개발**
 - 보안 범위·한계·책임 있는 사용: [SECURITY.md](SECURITY.md)
 - 보안 통제 정책(입력검증/출력인코딩/SQL/헤더/감사): [docs/SECURITY.md](docs/SECURITY.md)
 - 개발 컨텍스트·단계 로드맵: [CLAUDE.md](CLAUDE.md)
@@ -138,6 +148,9 @@ It is **defense/detection/audit only — not an attack or penetration-testing to
 are documented in [SECURITY.md](SECURITY.md).
 Run locally with `./gradlew bootRun`; deploy with `docker compose up --build` (app + PostgreSQL,
 secrets via env vars `AEGIS_JWT_SECRET`, `DB_PASSWORD`).
+
+👉 **Full usage guide in English: [docs/USAGE.en.md](docs/USAGE.en.md)** — install, run, a 5-minute
+API tour, how to watch each defense actually trigger, tuning reference, and integration notes.
 
 ## 日本語（要約）
 **Aegis** は Spring Boot 3.3 / Java 21 / Spring Security 6 で構築した防御型 Web セキュリティの
