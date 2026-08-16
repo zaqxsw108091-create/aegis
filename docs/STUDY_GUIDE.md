@@ -83,8 +83,12 @@ com.aegis
 - **왜**: Access는 짧게(보안), 사용자 편의는 Refresh로 유지.
 - **어떻게 동작**: Refresh 토큰의 서명·만료·**종류(type=refresh)** 를 확인하고, 사용자가 여전히 유효하면
   새 Access+Refresh를 발급(회전). Access 토큰을 refresh 자리에 넣으면 종류 불일치로 `401`.
-- **코드**: `auth/AuthService.refresh`, `auth/JwtService.isRefreshToken`.
-- **한마디**: "짧은 출입증이 만료되면, 긴 재발급권으로 조용히 새 출입증을 받습니다."
+  - **1회용(회전)**: 서버가 발급한 refresh를 **SHA-256 해시로 저장**해두고, 사용하면 즉시 소비(삭제)한다.
+  - **재사용 감지**: 서명은 유효한데 저장소에 없는 refresh가 오면 **탈취**로 간주 →
+    그 사용자의 **모든 세션을 폐기**하고 `TOKEN_REUSE` 감사 기록 + (설정 시) 웹훅 알림 + `401`.
+  - **로그아웃**: `POST /api/auth/logout` 으로 해당 refresh를 폐기(멱등, `204`).
+- **코드**: `auth/AuthService.refresh/logout`, `auth/RefreshTokenService`, `auth/RefreshToken`(V6 테이블).
+- **한마디**: "재발급권은 1회용이라, 누가 훔쳐 다시 쓰면 그 즉시 들통나고 전체 세션이 끊깁니다."
 
 ### 3-5. 권한 (ROLE_USER / ROLE_ADMIN)
 - **무엇**: 사용자 등급. 관리자 자원은 ADMIN만.
@@ -181,7 +185,7 @@ com.aegis
 - **무엇**: 보안 사건을 **시각 / 행위자 / IP / 유형 / 결과** 로 기록.
 - **왜**: 무슨 일이 언제 누구에 의해 일어났는지 추적·증빙하려고(사고 분석/감사).
 - **어떻게 동작**:
-  - 기록되는 사건(유형): `LOGIN_SUCCESS, LOGIN_FAILURE, IP_BLOCKED, RATE_LIMITED, ACCESS_DENIED`
+  - 기록되는 사건(유형): `LOGIN_SUCCESS, LOGIN_FAILURE, IP_BLOCKED, RATE_LIMITED, ACCESS_DENIED, TOKEN_REUSE, LOGOUT`
   - 결과: `SUCCESS, FAILURE, BLOCKED, DENIED`
   - **append-only(변경 불가)**: 엔티티가 `@Immutable` + setter 없음 → 한 번 쓰면 **수정 불가**(위조 방지).
   - 콘솔과 DB(`audit_log`)에 동시 기록. **비밀번호/토큰은 절대 기록하지 않음**.
@@ -258,7 +262,7 @@ com.aegis
   A. 계정 잠금은 "한 계정 집중 공격", IP 차단은 "여러 계정 갈아타는 공격"을 막습니다. 노리는 게 달라요.
 - **Q. JWT는 어디에 저장해요? 탈취되면?**
   A. 클라이언트가 보관하고 헤더로 보냅니다. Access는 30분으로 짧게 해 피해를 줄이고, 만료 시 Refresh로 갱신합니다.
-  (개선 여지: Refresh 토큰 폐기 목록(블랙리스트)·회전 강화.)
+  Refresh는 **1회용(회전)** 이라 재사용되면 탈취로 판단해 **전체 세션을 즉시 폐기**하고, 로그아웃으로도 폐기할 수 있습니다.
 - **Q. 비밀번호 안전한가요?**
   A. BCrypt(strength 12) 단방향 해시 + 솔트로 저장합니다. 원문은 어디에도 없습니다.
 - **Q. 감사 로그를 공격자가 지우면?**

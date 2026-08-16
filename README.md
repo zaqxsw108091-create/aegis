@@ -112,6 +112,7 @@ java -jar build/libs/aegis-0.1.0.jar \
 | GET | `/api/me` | 인증(Bearer) |
 | GET | `/api/admin/dashboard/{events,blocked-ips,stats}` | ROLE_ADMIN |
 | GET | `/admin/dashboard` | ROLE_ADMIN (웹 화면) |
+| GET | `/api/admin/ping` | ROLE_ADMIN (권한 확인용 샘플) |
 | GET | `/actuator/health` `/info` `/prometheus` | 인증 |
 | GET | `/swagger-ui.html` | API 문서 |
 
