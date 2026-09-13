@@ -60,8 +60,8 @@ Verify: `http://localhost:8080/health` → `{"status":"UP"}`
 
 | Username | Password | Role |
 |---|---|---|
-| `daeyoung0` | `dae0` | `ROLE_ADMIN` |
-| `admin` | `12340` | `ROLE_USER` (named "admin", but a regular user) |
+| `daeyoung0` | `dae0nooli` | `ROLE_ADMIN` |
+| `people` | `admin123400` | `ROLE_USER` |
 
 ### B) Docker Compose (app + PostgreSQL, prod profile)
 ```bash
@@ -96,8 +96,12 @@ Open **Swagger UI**: `http://localhost:8080/swagger-ui.html`
 6. **Log out** — `POST /api/auth/logout` with the `refreshToken` → `204`, token revoked.
 
 ### The admin dashboard
-`http://localhost:8080/admin/dashboard` (log in as `daeyoung0` / `dae0`)
-Shows totals, Micrometer counters, per-type event counts, currently blocked IPs, and the 50 most recent security events.
+`http://localhost:8080/admin/dashboard` (log in as `daeyoung0` / `dae0nooli`)
+A dark SOC-style console that auto-refreshes every 30 seconds. It shows a **threat-level banner**
+(green = secure, amber = login failures in the last 24h, red = an IP is currently blocked), totals,
+Micrometer counters, per-type event counts, currently blocked IPs, and the 50 most recent security
+events with color-coded result badges. Styling is served as a same-origin stylesheet so the strict
+CSP (`default-src 'self'`) stays intact — no inline styles or scripts.
 
 ### Equivalent with curl
 ```bash
@@ -111,7 +115,7 @@ TOKEN=$(curl -s -X POST localhost:8080/api/auth/login -H 'Content-Type: applicat
 curl -s localhost:8080/api/me -H "Authorization: Bearer $TOKEN"
 
 # admin API (basic auth also works in dev)
-curl -s -u daeyoung0:dae0 localhost:8080/api/admin/dashboard/stats
+curl -s -u daeyoung0:dae0nooli localhost:8080/api/admin/dashboard/stats
 ```
 
 ---

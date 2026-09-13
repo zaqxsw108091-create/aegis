@@ -87,6 +87,22 @@ class DashboardApiTest {
     void 관리자_웹화면이_렌더링된다() throws Exception {
         mvc.perform(get("/admin/dashboard"))
                 .andExpect(status().isOk())
-                .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_HTML));
+                .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_HTML))
+                // 위협 수준 배너와 외부 스타일시트 링크가 포함된다
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("/css/dashboard.css")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("SYSTEM SECURE")))
+                // CSP(default-src 'self') 준수: 인라인 <style>/style= 속성을 쓰지 않는다
+                .andExpect(content().string(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("<style"))))
+                .andExpect(content().string(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString(" style="))));
+    }
+
+    @Test
+    void 대시보드_스타일시트는_인증없이_제공된다() throws Exception {
+        // CSS 는 민감정보가 없고, 브라우저가 페이지와 함께 요청하므로 공개 경로여야 한다
+        mvc.perform(get("/css/dashboard.css"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(".status.level-danger")));
     }
 }

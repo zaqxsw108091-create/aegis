@@ -1,0 +1,127 @@
+/* Aegis 보안 대시보드 — 관제(SOC) 콘솔 테마
+   외부 파일로 분리한 이유: CSP default-src 'self' 를 유지하면서(인라인 CSS 차단)
+   같은 출처 스타일시트만 허용하기 위함. 인라인 style 속성은 사용하지 않는다. */
+
+:root {
+  --bg: #0b1220;
+  --bg-2: #101a2e;
+  --panel: #141f36;
+  --panel-2: #1a2743;
+  --line: #24334f;
+  --text: #e6edf7;
+  --muted: #8fa1bf;
+  --accent: #4cc2ff;
+  --ok: #2ecc71;
+  --warn: #f5b942;
+  --danger: #ff5c6c;
+  --mono: "Cascadia Code", "Consolas", "SFMono-Regular", Menlo, monospace;
+  --sans: "Segoe UI", system-ui, -apple-system, "Malgun Gothic", sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(1200px 600px at 10% -10%, #17305a 0%, transparent 60%),
+    radial-gradient(900px 500px at 110% 10%, #0f2a3f 0%, transparent 55%),
+    var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.wrap { max-width: 1280px; margin: 0 auto; padding: 20px 24px 48px; }
+
+/* ── 상단 바 ─────────────────────────────────────────── */
+.topbar {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 14px 18px; border: 1px solid var(--line); border-radius: 12px;
+  background: linear-gradient(180deg, var(--panel-2), var(--panel));
+}
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand .logo {
+  width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center;
+  background: linear-gradient(135deg, #1e3a8a, #0ea5e9); font-size: 20px;
+  box-shadow: 0 0 0 1px rgba(76,194,255,.25), 0 6px 18px rgba(14,165,233,.25);
+}
+.brand h1 { margin: 0; font-size: 18px; letter-spacing: .3px; }
+.brand .sub { color: var(--muted); font-size: 12px; margin-top: 2px; }
+.topbar .actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.topbar a {
+  color: var(--accent); text-decoration: none; font-size: 12px;
+  padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg-2);
+}
+.topbar a:hover { border-color: var(--accent); }
+
+/* ── 상태 배너 ───────────────────────────────────────── */
+.status {
+  margin-top: 14px; display: flex; align-items: center; gap: 14px;
+  padding: 14px 18px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel);
+}
+.status .dot { width: 12px; height: 12px; border-radius: 50%; box-shadow: 0 0 0 4px rgba(255,255,255,.04); }
+.status .label { font-weight: 700; font-family: var(--mono); letter-spacing: 1px; }
+.status .desc { color: var(--muted); font-size: 12px; }
+.status.level-ok     { border-color: rgba(46,204,113,.45); }
+.status.level-ok .dot     { background: var(--ok);     box-shadow: 0 0 12px var(--ok); }
+.status.level-ok .label   { color: var(--ok); }
+.status.level-warn   { border-color: rgba(245,185,66,.5); }
+.status.level-warn .dot   { background: var(--warn);   box-shadow: 0 0 12px var(--warn); }
+.status.level-warn .label { color: var(--warn); }
+.status.level-danger { border-color: rgba(255,92,108,.55); }
+.status.level-danger .dot { background: var(--danger); box-shadow: 0 0 12px var(--danger); }
+.status.level-danger .label { color: var(--danger); }
+
+/* ── 섹션 / 카드 ─────────────────────────────────────── */
+h2 {
+  margin: 26px 0 10px; font-size: 12px; font-weight: 600; letter-spacing: 1.4px;
+  text-transform: uppercase; color: var(--muted);
+}
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
+.card {
+  padding: 14px 16px; border-radius: 12px; border: 1px solid var(--line);
+  background: linear-gradient(180deg, var(--panel-2), var(--panel));
+}
+.card .n { font-family: var(--mono); font-size: 28px; font-weight: 700; line-height: 1.1; }
+.card .l { color: var(--muted); font-size: 12px; margin-top: 6px; }
+.card.accent .n { color: var(--accent); }
+.card.warn .n   { color: var(--warn); }
+.card.danger .n { color: var(--danger); }
+
+/* ── 표 ──────────────────────────────────────────────── */
+.panel { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--panel); }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead th {
+  text-align: left; padding: 10px 12px; font-size: 11px; letter-spacing: 1px; text-transform: uppercase;
+  color: var(--muted); background: var(--bg-2); border-bottom: 1px solid var(--line);
+}
+tbody td { padding: 9px 12px; border-bottom: 1px solid rgba(36,51,79,.6); vertical-align: top; }
+tbody tr:last-child td { border-bottom: 0; }
+tbody tr:hover td { background: rgba(76,194,255,.05); }
+.mono { font-family: var(--mono); font-size: 12.5px; }
+.muted { color: var(--muted); }
+.empty { color: var(--muted); text-align: center; padding: 18px 12px; }
+
+/* ── 배지 ────────────────────────────────────────────── */
+.badge {
+  display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700;
+  font-family: var(--mono); letter-spacing: .4px; border: 1px solid transparent;
+}
+/* 결과 */
+.badge-SUCCESS { color: var(--ok);     background: rgba(46,204,113,.12);  border-color: rgba(46,204,113,.35); }
+.badge-FAILURE { color: var(--warn);   background: rgba(245,185,66,.12);  border-color: rgba(245,185,66,.35); }
+.badge-BLOCKED { color: var(--danger); background: rgba(255,92,108,.12);  border-color: rgba(255,92,108,.35); }
+.badge-DENIED  { color: var(--danger); background: rgba(255,92,108,.12);  border-color: rgba(255,92,108,.35); }
+/* 유형 */
+.type-LOGIN_SUCCESS { color: var(--ok); }
+.type-LOGIN_FAILURE { color: var(--warn); }
+.type-IP_BLOCKED,
+.type-TOKEN_REUSE   { color: var(--danger); font-weight: 700; }
+.type-RATE_LIMITED,
+.type-ACCESS_DENIED { color: #ff9f6b; }
+.type-LOGOUT        { color: var(--muted); }
+
+/* ── 푸터 ────────────────────────────────────────────── */
+.footer { margin-top: 22px; color: var(--muted); font-size: 12px; display: flex; gap: 14px; flex-wrap: wrap; }
+.footer .pill { padding: 3px 9px; border: 1px solid var(--line); border-radius: 999px; background: var(--bg-2); }

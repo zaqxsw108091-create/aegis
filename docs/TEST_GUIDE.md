@@ -18,11 +18,11 @@
 ### 🔑 dev 시드 계정 (이 문서에서만 사용, 운영 금지)
 | 사용자 | 비밀번호 | 권한 |
 |---|---|---|
-| `daeyoung0` | `dae0` | ROLE_ADMIN |
-| `admin`  | `12340`  | ROLE_USER (이름은 admin이지만 일반 권한) |
+| `daeyoung0` | `dae0nooli` | ROLE_ADMIN |
+| `people` | `admin123400` | ROLE_USER |
 
 ### 보호 자원 호출 2가지 방법
-- **Basic 인증(가장 쉬움)**: `curl.exe -u daeyoung0:dae0 ...`
+- **Basic 인증(가장 쉬움)**: `curl.exe -u daeyoung0:dae0nooli ...`
 - **JWT**: 로그인으로 accessToken 받아 `-H "Authorization: Bearer <토큰>"`
 - **브라우저**: Swagger UI(`/swagger-ui.html`)의 **Authorize** 버튼에 토큰 입력
 
@@ -103,9 +103,8 @@ curl.exe -s -X POST http://localhost:8080/api/auth/refresh -H "Content-Type: app
 ✅ 기대: `200` + 새 토큰. 잘못된 값 넣으면 `401` (`INVALID_TOKEN`)
 
 ### 3-9. 권한 거부 (일반 유저가 관리자 자원 접근)
-> `admin` 계정은 이름만 admin일 뿐 **일반(ROLE_USER) 권한**이다. 그래서 관리자 자원에 접근하면 거부된다.
 ```powershell
-curl.exe -s -o NUL -w "%{http_code}`n" -u admin:12340 http://localhost:8080/api/admin/dashboard/stats
+curl.exe -s -o NUL -w "%{http_code}`n" -u people:admin123400 http://localhost:8080/api/admin/dashboard/stats
 ```
 ✅ 기대: `403` (ROLE_USER 는 ADMIN 자원 불가)
 
@@ -127,16 +126,16 @@ curl.exe -s -D - -o NUL http://localhost:8080/health
 ## 5. 대시보드 (P5) — 관리자 모니터링
 ### 5-1. REST API (Basic 인증)
 ```powershell
-curl.exe -s -u daeyoung0:dae0 http://localhost:8080/api/admin/dashboard/stats
-curl.exe -s -u daeyoung0:dae0 http://localhost:8080/api/admin/dashboard/events
-curl.exe -s -u daeyoung0:dae0 http://localhost:8080/api/admin/dashboard/blocked-ips
+curl.exe -s -u daeyoung0:dae0nooli http://localhost:8080/api/admin/dashboard/stats
+curl.exe -s -u daeyoung0:dae0nooli http://localhost:8080/api/admin/dashboard/events
+curl.exe -s -u daeyoung0:dae0nooli http://localhost:8080/api/admin/dashboard/blocked-ips
 ```
 ✅ 기대: `200`. `stats` 에는 전체 이벤트수/로그인 실패수/차단 IP수/유형별 집계/메트릭값.
 (3장에서 실패를 많이 만들었으면 `loginFailuresTotal` 이 올라가 있다)
 
 ### 5-2. 웹 화면 (브라우저)
 브라우저 → **http://localhost:8080/admin/dashboard**
-- Basic 인증 창이 뜨면 `daeyoung0` / `dae0` 입력 → 대시보드 화면이 뜬다.
+- Basic 인증 창이 뜨면 `daeyoung0` / `dae0nooli` 입력 → 대시보드 화면이 뜬다.
 - 요약 카드, 메트릭, 이벤트 유형별 집계, 차단 IP, 최근 이벤트 표가 보인다.
 ✅ 비관리자(`user`)로 들어가면 `403`.
 
@@ -144,7 +143,7 @@ curl.exe -s -u daeyoung0:dae0 http://localhost:8080/api/admin/dashboard/blocked-
 
 ## 6. 메트릭 (Actuator/Prometheus)
 ```powershell
-curl.exe -s -u daeyoung0:dae0 http://localhost:8080/actuator/prometheus | findstr aegis_detection
+curl.exe -s -u daeyoung0:dae0nooli http://localhost:8080/actuator/prometheus | findstr aegis_detection
 ```
 ✅ 기대: `aegis_detection_login_failures_total`, `aegis_detection_ip_blocked_total`,
 `aegis_detection_rate_limited_total` 가 보인다.

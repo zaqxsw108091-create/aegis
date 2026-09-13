@@ -120,11 +120,13 @@ Aegis는 크게 **3가지 화면/접점**이 있다.
 → 각 항목을 펼쳐 **Try it out**으로 실행하고 응답을 바로 본다. 코딩/curl 없이 테스트 가능.
 
 ### 4-3. 관리자 대시보드 — 실제 "보안 모니터링 화면"
-브라우저: **http://localhost:8080/admin/dashboard** (로그인 `daeyoung0` / `dae0`)
-화면 구성(서버 렌더링):
+브라우저: **http://localhost:8080/admin/dashboard** (로그인 `daeyoung0` / `dae0nooli`)
+화면 구성(서버 렌더링, 어두운 관제 콘솔 테마, **30초 자동 갱신**):
 ```
-🛡️ Aegis 보안 대시보드
-관리자 전용 · /actuator/prometheus · 새로고침
+🛡️ AEGIS SECURITY CONSOLE           [↻ 새로고침] [📈 메트릭] [📘 API 문서]
+
+● SYSTEM SECURE — 특이사항 없음          ← 위협 수준 배너 (초록/노랑/빨강)
+   (24h 실패 있으면 "SUSPICIOUS ACTIVITY", 차단 IP 있으면 "THREAT DETECTED")
 
 요약
 ┌────────────┐ ┌────────────┐ ┌────────────┐ ┌────────────┐
@@ -174,7 +176,7 @@ Aegis는 크게 **3가지 화면/접점**이 있다.
 가장 쉬운 순서:
 1. `./gradlew bootRun` 으로 기동 → `http://localhost:8080/health` 가 `{"status":"UP"}` 면 OK.
 2. **Swagger UI**(`/swagger-ui.html`)에서 회원가입 → 로그인 → Authorize → 보호 자원 호출.
-3. **대시보드**(`/admin/dashboard`, daeyoung0/dae0)에서 사건이 쌓이는지 확인.
+3. **대시보드**(`/admin/dashboard`, daeyoung0/dae0nooli)에서 사건이 쌓이는지 확인.
 4. 무차별 대입/레이트리밋 같은 "차단" 테스트는 **맨 마지막에**(막히면 앱 재시작으로 초기화).
 
 ➡️ **명령어까지 포함한 17개 항목 전체 시험표는 [TEST_GUIDE.md](TEST_GUIDE.md) 에 있다.**
@@ -202,7 +204,7 @@ Aegis는 크게 **3가지 화면/접점**이 있다.
 ## 7. 자주 헷갈리는 점 / 주의
 - **시드 계정(admin/user)·H2는 dev 전용**이다. 운영에선 생성되지 않고, 시크릿은 환경변수로 교체해야 한다.
 - 테스트 중 갑자기 **403/429** 가 계속 나오면 → IP가 차단됐거나 한도 초과. **앱 재시작**하면 초기화된다.
-- 관리자 자원은 반드시 **ADMIN 권한**이 필요(없으면 403). dev에선 `daeyoung0/dae0` 로 확인.
+- 관리자 자원은 반드시 **ADMIN 권한**이 필요(없으면 403). dev에선 `daeyoung0/dae0nooli` 로 확인.
 - 이 도구는 **방어·탐지·감사 전용**이며 공격/침투 테스트는 하지 않는다(범위·한계: [SECURITY.md](../SECURITY.md)).
 
 ---
