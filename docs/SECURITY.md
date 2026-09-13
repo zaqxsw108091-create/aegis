@@ -35,7 +35,7 @@
 ## 5. 감사 로깅 (AuditLog)
 - 보안 이벤트를 `audit_log` 테이블과 콘솔에 동시에 기록한다.
 - 기록 항목: **시각(createdAt) / 행위자(actor) / IP / 이벤트유형(type) / 결과(result)** + 부가 detail.
-- 이벤트유형: `LOGIN_SUCCESS, LOGIN_FAILURE, IP_BLOCKED, RATE_LIMITED, ACCESS_DENIED, TOKEN_REUSE, LOGOUT`
+- 이벤트유형: `LOGIN_SUCCESS, LOGIN_FAILURE, IP_BLOCKED, RATE_LIMITED, ACCESS_DENIED, TOKEN_REUSE, LOGOUT, IP_UNBLOCKED, ACCOUNT_UNLOCKED`
 - 결과: `SUCCESS, FAILURE, BLOCKED, DENIED`
 - **append-only(변경 불가) 정책**: 엔티티는 `@Immutable` + setter 없음으로 INSERT 후 수정 불가
   (Hibernate가 UPDATE SQL을 발행하지 않음). 애플리케이션 코드는 감사 로그를 수정/삭제하지 않는다.

@@ -185,7 +185,7 @@ com.aegis
 - **무엇**: 보안 사건을 **시각 / 행위자 / IP / 유형 / 결과** 로 기록.
 - **왜**: 무슨 일이 언제 누구에 의해 일어났는지 추적·증빙하려고(사고 분석/감사).
 - **어떻게 동작**:
-  - 기록되는 사건(유형): `LOGIN_SUCCESS, LOGIN_FAILURE, IP_BLOCKED, RATE_LIMITED, ACCESS_DENIED, TOKEN_REUSE, LOGOUT`
+  - 기록되는 사건(유형): `LOGIN_SUCCESS, LOGIN_FAILURE, IP_BLOCKED, RATE_LIMITED, ACCESS_DENIED, TOKEN_REUSE, LOGOUT, IP_UNBLOCKED, ACCOUNT_UNLOCKED`
   - 결과: `SUCCESS, FAILURE, BLOCKED, DENIED`
   - **append-only(변경 불가)**: 엔티티가 `@Immutable` + setter 없음 → 한 번 쓰면 **수정 불가**(위조 방지).
   - 콘솔과 DB(`audit_log`)에 동시 기록. **비밀번호/토큰은 절대 기록하지 않음**.
@@ -197,7 +197,15 @@ com.aegis
 - **무엇**: 관리자가 보안 현황을 보는 화면 + API.
 - **왜**: 사람이 한눈에 상태를 보고 대응하려고.
 - **어떻게 동작**:
-  - REST API: `/api/admin/dashboard/events`(최근 이벤트), `/blocked-ips`(차단 IP), `/stats`(요약+메트릭).
+  - REST API(조회): `/api/admin/dashboard/events`(최근 이벤트), `/blocked-ips`(차단 IP), `/stats`(요약+메트릭),
+    `/users`(사용자별 로그인 실패 횟수·잠금 상태).
+  - **관리자 수동 조치(상태 변경)**: 화면의 버튼/폼으로 **IP 수동 차단**(`POST /admin/blocked-ips`),
+    **IP 차단 해제**(`POST /admin/blocked-ips/unblock`), **계정 잠금 해제·실패 횟수 초기화**(`POST /admin/users/unlock`).
+    모두 감사 로그(`IP_BLOCKED`/`IP_UNBLOCKED`/`ACCOUNT_UNLOCKED`)에 **누가 했는지(행위자)** 남는다.
+    해제된 IP는 그 시점부터 실패를 다시 세므로, 해제 직후 실패 1건으로 재차단되지 않는다.
+  - **왜 상태 변경은 /api 가 아니라 /admin 인가**: 대시보드는 브라우저(Basic 인증)로 쓰여 브라우저가 자격증명을
+    자동 전송한다 → CSRF 공격이 가능하므로 **CSRF 보호가 걸리는 /admin 경로**에 두고 폼에 토큰을 자동 삽입한다.
+    (/api/** 는 헤더 토큰(JWT) 전용이라 CSRF 예외)
   - 웹 화면: `/admin/dashboard`(Thymeleaf, 관제 콘솔 테마, 30초 자동 갱신) — 위협 수준 배너(정상/주의/위험)/요약 카드/메트릭/유형별 집계/차단 IP/최근 이벤트 표(결과별 색 배지).
   - **CSP와 화면의 관계**: CSP `default-src 'self'`는 페이지 안 인라인 CSS/JS를 차단한다. 그래서 스타일은
     같은 출처의 외부 파일(`/css/dashboard.css`)로 제공한다 — 보안을 약화(`unsafe-inline`)시키지 않는 올바른 방법.

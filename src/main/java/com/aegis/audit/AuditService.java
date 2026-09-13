@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 /**
  * 보안 감사 로그를 콘솔과 DB(audit_log)에 동시에 기록한다.
@@ -35,5 +36,11 @@ public class AuditService {
     @Transactional(readOnly = true)
     public long countSince(AuditEventType type, String ip, LocalDateTime after) {
         return repository.countByTypeAndIpAndCreatedAtAfter(type, ip, after);
+    }
+
+    /** 특정 IP의 가장 최근 해당 유형 이벤트 시각(없으면 empty). */
+    @Transactional(readOnly = true)
+    public Optional<LocalDateTime> lastEventAt(AuditEventType type, String ip) {
+        return repository.findFirstByTypeAndIpOrderByCreatedAtDesc(type, ip).map(AuditLog::getCreatedAt);
     }
 }

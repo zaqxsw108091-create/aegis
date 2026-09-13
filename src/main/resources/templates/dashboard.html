@@ -46,6 +46,9 @@
         </div>
     </section>
 
+    <!-- 조치 결과 메시지 (고정 코드 → 문구, 서버에서 매핑) -->
+    <div class="notice" th:if="${message != null}" th:text="${message}">-</div>
+
     <!-- 요약 카드 -->
     <h2>요약</h2>
     <div class="cards">
@@ -77,21 +80,62 @@
         </table>
     </div>
 
-    <!-- 차단 IP -->
-    <h2>차단 중인 IP (자동 만료)</h2>
+    <!-- 사용자 현황: 로그인 실패 횟수 / 잠금 상태 / 잠금 해제 -->
+    <h2>사용자 현황 (로그인 실패 횟수 · 계정 잠금)</h2>
     <div class="panel">
         <table>
-            <thead><tr><th>IP</th><th>사유</th><th>차단 시각</th><th>해제 예정</th></tr></thead>
+            <thead><tr><th>사용자</th><th>권한</th><th>실패 횟수</th><th>상태</th><th>잠금 해제 예정</th><th>조치</th></tr></thead>
             <tbody>
-                <tr th:if="${blockedIps.isEmpty()}"><td colspan="4" class="empty">차단된 IP 없음</td></tr>
+                <tr th:if="${users.isEmpty()}"><td colspan="6" class="empty">등록된 사용자 없음</td></tr>
+                <tr th:each="u : ${users}">
+                    <td class="mono" th:text="${u.username()}">-</td>
+                    <td class="mono muted" th:text="${u.role()}">-</td>
+                    <td class="mono" th:classappend="${u.failedLoginCount() > 0} ? 'warn-text' : ''" th:text="${u.failedLoginCount()}">0</td>
+                    <td>
+                        <span class="badge badge-DENIED" th:if="${u.locked()}">LOCKED</span>
+                        <span class="badge badge-SUCCESS" th:unless="${u.locked()}">ACTIVE</span>
+                    </td>
+                    <td class="mono muted" th:text="${u.lockedUntil() != null} ? ${u.lockedUntil()} : '-'">-</td>
+                    <td>
+                        <form class="inline" th:action="@{/admin/users/unlock}" method="post"
+                              th:if="${u.locked() or u.failedLoginCount() > 0}">
+                            <input type="hidden" name="username" th:value="${u.username()}"/>
+                            <button type="submit" class="btn btn-ok">잠금 해제 / 초기화</button>
+                        </form>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 차단 IP: 목록 + 해제 + 수동 차단 -->
+    <h2>차단 중인 IP (자동 만료 · 수동 해제 가능)</h2>
+    <div class="panel">
+        <table>
+            <thead><tr><th>IP</th><th>사유</th><th>차단 시각</th><th>해제 예정</th><th>조치</th></tr></thead>
+            <tbody>
+                <tr th:if="${blockedIps.isEmpty()}"><td colspan="5" class="empty">차단된 IP 없음</td></tr>
                 <tr th:each="b : ${blockedIps}">
                     <td class="mono" th:text="${b.ip()}">-</td>
                     <td th:text="${b.reason()}">-</td>
                     <td class="mono muted" th:text="${b.blockedAt()}">-</td>
                     <td class="mono muted" th:text="${b.blockedUntil()}">-</td>
+                    <td>
+                        <form class="inline" th:action="@{/admin/blocked-ips/unblock}" method="post">
+                            <input type="hidden" name="ip" th:value="${b.ip()}"/>
+                            <button type="submit" class="btn btn-ok">차단 해제</button>
+                        </form>
+                    </td>
                 </tr>
             </tbody>
         </table>
+        <form class="toolbar" th:action="@{/admin/blocked-ips}" method="post">
+            <span class="muted">수동 차단:</span>
+            <input class="input mono" type="text" name="ip" placeholder="IP (예: 203.0.113.5)" maxlength="64" required/>
+            <input class="input mono narrow" type="number" name="minutes" value="10" min="1" max="10080" title="차단 시간(분)"/>
+            <input class="input" type="text" name="reason" placeholder="사유 (선택)" maxlength="200"/>
+            <button type="submit" class="btn btn-danger">IP 차단</button>
+        </form>
     </div>
 
     <!-- 최근 이벤트 -->

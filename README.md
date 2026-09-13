@@ -55,7 +55,7 @@ HTTP 요청 → │ IpBlockFilter → RateLimitFilter → JwtAuthenticationFilte
 | P2 | 인증(User·BCrypt12·회원가입/로그인·JWT Access+Refresh·계정 잠금·권한) | ✅ |
 | P3 | 탐지(무차별 대입 차단·IP 블록·레이트 리미팅·화이트리스트·추상화·메트릭·감사) | ✅ |
 | P4 | 방어(보안 헤더·CSRF·입력검증·SQLi/XSS 점검·AuditLog 행위자/append-only) | ✅ |
-| P5 | 대시보드(관리자 전용 모니터링 API·Thymeleaf 화면·메트릭 연동) | ✅ |
+| P5 | 대시보드(관리자 전용 모니터링 API·관제 콘솔 화면·메트릭 연동·**수동 IP 차단/해제·계정 잠금 해제·사용자별 실패 횟수**) | ✅ |
 | P6 | 릴리스 0.1.0(테스트/커버리지·Docker·배포 가이드·문서 정비) | ✅ |
 | P7 | CI/품질(GitHub Actions 빌드+테스트, OWASP dependency-check 취약점 스캔) | ✅ |
 | P8 | 토큰 수명주기(Refresh 회전·재사용 감지 시 전체 폐기·로그아웃) | ✅ |
@@ -100,6 +100,8 @@ java -jar build/libs/aegis-0.1.0.jar \
   prod에서 `AEGIS_JWT_SECRET`로 **반드시 교체**(기본값으로 기동 금지).
 - Actuator는 `health/info/prometheus`만 노출하고 인증을 요구한다. 비인증 공개는 커스텀 `/health`만.
 - `ddl-auto=validate` 고정 — 스키마 변경은 `src/main/resources/db/migration/V{n}__*.sql` 추가로만.
+- **관리자 IP는 `aegis.security.whitelist`에 넣어라.** 관리자 본인 IP가 무차별 대입 탐지에 걸려
+  차단되면 대시보드도 403이 되어 스스로 해제할 수 없다(화이트리스트 IP는 차단/레이트리밋 면제).
 - 관리자(ROLE_ADMIN) 계정은 시크릿 하드코딩을 피하기 위해 시드하지 않는다. 운영에서 DB로 특정
   사용자 role을 ADMIN으로 승격해 사용한다.
 - 프록시 뒤 배포 시 `server.forward-headers-strategy`(prod 기본 적용)로 실제 클라이언트 IP를 인식.
@@ -110,8 +112,9 @@ java -jar build/libs/aegis-0.1.0.jar \
 | GET | `/health` | 공개 |
 | POST | `/api/auth/signup` `/api/auth/login` `/api/auth/refresh` `/api/auth/logout` | 공개 |
 | GET | `/api/me` | 인증(Bearer) |
-| GET | `/api/admin/dashboard/{events,blocked-ips,stats}` | ROLE_ADMIN |
+| GET | `/api/admin/dashboard/{events,blocked-ips,stats,users}` | ROLE_ADMIN |
 | GET | `/admin/dashboard` | ROLE_ADMIN (웹 화면) |
+| POST | `/admin/blocked-ips` · `/admin/blocked-ips/unblock` · `/admin/users/unlock` | ROLE_ADMIN + CSRF (수동 차단/해제/잠금 해제) |
 | GET | `/api/admin/ping` | ROLE_ADMIN (권한 확인용 샘플) |
 | GET | `/actuator/health` `/info` `/prometheus` | 인증 |
 | GET | `/swagger-ui.html` | API 문서 |

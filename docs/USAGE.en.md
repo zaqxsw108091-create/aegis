@@ -103,6 +103,15 @@ Micrometer counters, per-type event counts, currently blocked IPs, and the 50 mo
 events with color-coded result badges. Styling is served as a same-origin stylesheet so the strict
 CSP (`default-src 'self'`) stays intact — no inline styles or scripts.
 
+**Admin actions (buttons/forms on the page):**
+- **Users** table — per-user failed-login count and lock status, with an *Unlock / reset* button.
+- **Blocked IPs** table — an *Unblock* button per IP, plus a form to **block an IP manually** (IP, minutes, reason).
+- Every action is written to the audit log with the acting admin as `actor`
+  (`IP_BLOCKED`, `IP_UNBLOCKED`, `ACCOUNT_UNLOCKED`). After an unblock, failure counting restarts from that moment.
+- These state-changing endpoints live under `/admin/**` (CSRF-protected, token auto-injected into forms) rather than
+  `/api/**`, because the dashboard is used with browser Basic auth which browsers send automatically.
+- ⚠️ If your own IP gets blocked you cannot reach the dashboard to unblock it — put admin IPs in `aegis.security.whitelist`.
+
 ### Equivalent with curl
 ```bash
 # sign up + log in

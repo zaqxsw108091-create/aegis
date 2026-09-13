@@ -135,9 +135,27 @@ curl.exe -s -u daeyoung0:dae0nooli http://localhost:8080/api/admin/dashboard/blo
 
 ### 5-2. 웹 화면 (브라우저)
 브라우저 → **http://localhost:8080/admin/dashboard**
-- Basic 인증 창이 뜨면 `daeyoung0` / `dae0nooli` 입력 → 대시보드 화면이 뜬다.
-- 요약 카드, 메트릭, 이벤트 유형별 집계, 차단 IP, 최근 이벤트 표가 보인다.
-✅ 비관리자(`user`)로 들어가면 `403`.
+- Basic 인증 창이 뜨면 `daeyoung0` / `dae0nooli` 입력 → 어두운 관제 콘솔 화면이 뜬다.
+- 위협 수준 배너, 요약 카드, 메트릭, 이벤트 유형별 집계, **사용자 현황**, 차단 IP, 최근 이벤트 표가 보인다.
+✅ 비관리자(`people`)로 들어가면 `403`.
+
+### 5-3. 관리자 조치 (브라우저에서 클릭)
+1. **수동 IP 차단**: 차단 IP 표 아래 입력창에 `203.0.113.5` / `10` / `테스트` 입력 → `IP 차단` 클릭
+   ✅ 상단에 "IP를 차단했습니다." 메시지, 차단 IP 표에 행 추가, 최근 이벤트에 `IP_BLOCKED`(행위자=daeyoung0)
+2. **차단 해제**: 그 행의 `차단 해제` 클릭 ✅ 행이 사라지고 `IP_UNBLOCKED` 기록
+3. **계정 잠금 해제**: 3-7에서 잠근 `bob`이 사용자 현황 표에 `LOCKED` / 실패 5로 보인다 →
+   `잠금 해제 / 초기화` 클릭 ✅ `ACTIVE` / 실패 0, 이제 `bob`으로 바로 로그인 가능
+4. (보안 확인) 이 버튼들은 CSRF 토큰이 자동으로 붙는다. curl로 토큰 없이 `POST /admin/blocked-ips` 를 보내면 `403`:
+```powershell
+curl.exe -s -o NUL -w "%{http_code}`n" -u daeyoung0:dae0nooli -X POST http://localhost:8080/admin/blocked-ips -d "ip=1.2.3.4"
+```
+✅ 기대: `403` (토큰 없는 상태 변경 거부 = CSRF 방어 동작)
+
+### 5-4. 사용자별 실패 횟수 API
+```powershell
+curl.exe -s -u daeyoung0:dae0nooli http://localhost:8080/api/admin/dashboard/users
+```
+✅ 기대: 각 사용자의 `failedLoginCount`, `locked`, `lockedUntil` 이 JSON으로 온다.
 
 ---
 
@@ -191,7 +209,11 @@ curl.exe -s -o NUL -w "health-after-block=%{http_code}`n" http://localhost:8080/
 | 11 | 권한 거부 | user 로 admin 자원 | 403 |
 | 12 | 보안 헤더 | `curl.exe -D -` | CSP/X-Frame/nosniff/Referrer |
 | 13 | 대시보드 API | `-u admin:...` | 200 + 통계 |
-| 14 | 대시보드 웹 | 브라우저 `/admin/dashboard` | 화면 표시 |
+| 14 | 대시보드 웹 | 브라우저 `/admin/dashboard` | 관제 화면 표시 |
+| 14-1 | 수동 IP 차단/해제 | 화면 버튼 | 표 갱신 + 감사 기록 |
+| 14-2 | 계정 잠금 해제 | 사용자 현황 버튼 | 실패 0 · 재로그인 가능 |
+| 14-3 | 관리자 조치 CSRF | 토큰 없이 POST | 403 |
+| 14-4 | 사용자별 실패 횟수 API | `/api/admin/dashboard/users` | JSON |
 | 15 | 메트릭 | `/actuator/prometheus` | aegis_detection_* |
 | 16 | 레이트리밋 | 65회 GET /health | 429 발생 |
 | 17 | IP 차단 | 12회 로그인 실패(다른 id) | 이후 403 |
@@ -202,7 +224,7 @@ curl.exe -s -o NUL -w "health-after-block=%{http_code}`n" http://localhost:8080/
 - **다층 방어(defense-in-depth)**: 계정 잠금(계정 단위) + IP 차단(IP 단위) + 레이트 리밋이 동시에 작동.
 - **운영 친화적 기반**: 프로파일 분리(dev/prod), Flyway 스키마 관리, Actuator/Prometheus 메트릭,
   JSON 구조적 로깅, OpenAPI 문서, 일관된 에러 응답 포맷.
-- **검증 가능한 보안**: 무차별 대입/레이트리밋/권한거부/보안헤더/토큰 회전을 **자동화 테스트 39개**로 보증.
+- **검증 가능한 보안**: 무차별 대입/레이트리밋/권한거부/보안헤더/토큰 회전/관리자 조치(CSRF)를 **자동화 테스트 51개**로 보증.
 - **무결성 있는 감사**: AuditLog가 append-only(@Immutable)라 보안 이벤트 기록을 사후 변조 불가.
 - **확장 고려 설계**: 레이트리미터를 인터페이스로 추상화 → 분산 환경에서 Redis 등으로 교체 가능.
 - **시크릿 안전**: JWT/DB 시크릿 환경변수화, 비밀번호 BCrypt(12), 로그·에러에 민감정보 비노출.

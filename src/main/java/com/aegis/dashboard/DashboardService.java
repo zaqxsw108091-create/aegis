@@ -7,6 +7,8 @@ import com.aegis.dashboard.dto.AuditEventView;
 import com.aegis.dashboard.dto.BlockedIpView;
 import com.aegis.dashboard.dto.DashboardStats;
 import com.aegis.dashboard.dto.MetricsSummary;
+import com.aegis.dashboard.dto.UserView;
+import com.aegis.auth.UserRepository;
 import com.aegis.detection.BlockedIpRepository;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -15,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,14 +32,30 @@ public class DashboardService {
 
     private final AuditLogRepository auditLogRepository;
     private final BlockedIpRepository blockedIpRepository;
+    private final UserRepository userRepository;
     private final MeterRegistry meterRegistry;
 
     public DashboardService(AuditLogRepository auditLogRepository,
                             BlockedIpRepository blockedIpRepository,
+                            UserRepository userRepository,
                             MeterRegistry meterRegistry) {
         this.auditLogRepository = auditLogRepository;
         this.blockedIpRepository = blockedIpRepository;
+        this.userRepository = userRepository;
         this.meterRegistry = meterRegistry;
+    }
+
+    /** 사용자별 로그인 실패 횟수/잠금 상태(관리자 조회용). 잠긴 계정이 먼저 오도록 정렬. */
+    @Transactional(readOnly = true)
+    public List<UserView> users() {
+        LocalDateTime now = LocalDateTime.now();
+        return userRepository.findAll().stream()
+                .map(u -> new UserView(u.getUsername(), u.getRole().name(), u.isEnabled(),
+                        u.getFailedLoginCount(), u.getLockedUntil(), u.isLocked(now)))
+                .sorted(Comparator.comparing(UserView::locked).reversed()
+                        .thenComparing(UserView::failedLoginCount, Comparator.reverseOrder())
+                        .thenComparing(UserView::username))
+                .toList();
     }
 
     @Transactional(readOnly = true)

@@ -46,6 +46,21 @@ public class LoginAttemptService {
         });
     }
 
+    /**
+     * 관리자 수동 잠금 해제: 실패 카운트 초기화 + 잠금 제거.
+     *
+     * @return 사용자가 존재해 처리됐으면 true
+     */
+    @Transactional
+    public boolean unlock(String username) {
+        return userRepository.findByUsername(username).map(user -> {
+            user.setFailedLoginCount(0);
+            user.setLockedUntil(null);
+            userRepository.save(user);
+            return true;
+        }).orElse(false);
+    }
+
     /** 잠금이 만료됐으면 해제하고 카운트를 초기화한다. */
     @Transactional
     public void clearExpiredLock(Long userId) {

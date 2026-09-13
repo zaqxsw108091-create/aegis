@@ -4,9 +4,11 @@ import com.aegis.dashboard.dto.DashboardStats;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Map;
 
 /**
  * 관리자용 대시보드 웹 화면(Thymeleaf, 서버 렌더링).
@@ -21,12 +23,23 @@ public class DashboardViewController {
         this.dashboardService = dashboardService;
     }
 
+    /** 조치 결과 메시지 코드 → 화면 문구. 코드 외 값은 무시한다(자유 텍스트 반영 금지). */
+    private static final Map<String, String> MESSAGES = Map.of(
+            "blocked", "IP를 차단했습니다.",
+            "unblocked", "IP 차단을 해제했습니다.",
+            "unlocked", "계정 잠금을 해제하고 실패 횟수를 초기화했습니다.",
+            "block_rejected", "차단할 수 없습니다(화이트리스트 IP이거나 이미 차단 중).",
+            "notfound", "대상을 찾지 못했습니다(이미 해제됐거나 존재하지 않음).",
+            "invalid", "입력값이 올바르지 않습니다.");
+
     @GetMapping("/admin/dashboard")
-    public String dashboard(Model model) {
+    public String dashboard(@RequestParam(required = false) String msg, Model model) {
         DashboardStats stats = dashboardService.stats();
         model.addAttribute("stats", stats);
         model.addAttribute("events", dashboardService.recentEvents(50));
         model.addAttribute("blockedIps", dashboardService.activeBlockedIps());
+        model.addAttribute("users", dashboardService.users());
+        model.addAttribute("message", msg == null ? null : MESSAGES.get(msg));
         model.addAttribute("threatLevel", threatLevel(stats));
         model.addAttribute("generatedAt", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         return "dashboard";

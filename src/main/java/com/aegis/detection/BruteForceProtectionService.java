@@ -54,10 +54,15 @@ public class BruteForceProtectionService {
 
         AegisSecurityProperties.Bruteforce bf = props.bruteforce();
         LocalDateTime windowStart = LocalDateTime.now().minusMinutes(bf.ipFailWindowMinutes());
-        long recentFailures = events.countSince(AuditEventType.LOGIN_FAILURE, ip, windowStart);
+        // 관리자가 수동 해제한 뒤에는 그 시점부터 다시 센다(해제 직후 재차단 방지).
+        LocalDateTime effectiveStart = events.lastEventAt(AuditEventType.IP_UNBLOCKED, ip)
+                .filter(t -> t.isAfter(windowStart))
+                .orElse(windowStart);
+        long recentFailures = events.countSince(AuditEventType.LOGIN_FAILURE, ip, effectiveStart);
 
         if (recentFailures >= bf.ipFailThreshold() && !isBlocked(ip)) {
-            block(ip, "brute-force 탐지: " + bf.ipFailWindowMinutes() + "분 내 실패 " + recentFailures + "회");
+            block(ip, "brute-force 탐지: " + bf.ipFailWindowMinutes() + "분 내 실패 " + recentFailures + "회",
+                    "system", props.bruteforce().ipBlockMinutes(), true);
         }
     }
 
@@ -70,13 +75,45 @@ public class BruteForceProtectionService {
         return blockedIpRepository.existsByIpAndBlockedUntilAfter(ip, LocalDateTime.now());
     }
 
-    private void block(String ip, String reason) {
+    /**
+     * 관리자 수동 차단. 화이트리스트 IP는 필터에서 면제되므로 차단이 무의미하여 거부한다.
+     *
+     * @return 차단됐으면 true, 화이트리스트/이미 차단 중이면 false
+     */
+    @Transactional
+    public boolean blockManually(String ip, int minutes, String reason, String actor) {
+        if (whitelist.isWhitelisted(ip) || isBlocked(ip)) {
+            return false;
+        }
+        block(ip, reason, actor, minutes, false);
+        return true;
+    }
+
+    /**
+     * 관리자 수동 해제. 유효한 차단 레코드를 제거하고 IP_UNBLOCKED 를 기록한다
+     * (이 기록 시점부터 실패 집계가 다시 시작된다).
+     *
+     * @return 실제로 해제된 차단이 있었으면 true
+     */
+    @Transactional
+    public boolean unblock(String ip, String actor) {
+        long removed = blockedIpRepository.deleteByIpAndBlockedUntilAfter(ip, LocalDateTime.now());
+        if (removed == 0) {
+            return false;
+        }
+        events.record(AuditEventType.IP_UNBLOCKED, AuditResult.SUCCESS, actor, ip, "관리자 수동 해제");
+        return true;
+    }
+
+    private void block(String ip, String reason, String actor, int minutes, boolean notify) {
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime until = now.plusMinutes(props.bruteforce().ipBlockMinutes());
+        LocalDateTime until = now.plusMinutes(minutes);
         blockedIpRepository.save(new BlockedIp(ip, reason, now, until));
-        events.record(AuditEventType.IP_BLOCKED, AuditResult.BLOCKED, "system", ip, reason + " (해제 예정 " + until + ")");
+        events.record(AuditEventType.IP_BLOCKED, AuditResult.BLOCKED, actor, ip, reason + " (해제 예정 " + until + ")");
         metrics.ipBlocked();
-        alertService.notify("IP_BLOCKED", "ip=" + ip + ", " + reason + ", 해제 예정 " + until);
+        if (notify) {
+            alertService.notify("IP_BLOCKED", "ip=" + ip + ", " + reason + ", 해제 예정 " + until);
+        }
     }
 
     /** 사용자명 로깅 시 과도한 길이/개행 차단. 비밀번호 등 민감정보는 애초에 전달하지 않는다. */

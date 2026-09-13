@@ -3,6 +3,7 @@ package com.aegis.dashboard;
 import com.aegis.dashboard.dto.AuditEventView;
 import com.aegis.dashboard.dto.BlockedIpView;
 import com.aegis.dashboard.dto.DashboardStats;
+import com.aegis.dashboard.dto.UserView;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -44,5 +45,11 @@ public class DashboardController {
     @Operation(summary = "요약 통계 + 메트릭", security = @SecurityRequirement(name = "bearer"))
     public DashboardStats stats() {
         return dashboardService.stats();
+    }
+
+    @GetMapping("/users")
+    @Operation(summary = "사용자별 로그인 실패 횟수/잠금 상태", security = @SecurityRequirement(name = "bearer"))
+    public List<UserView> users() {
+        return dashboardService.users();
     }
 }

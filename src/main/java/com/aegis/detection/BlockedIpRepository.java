@@ -14,4 +14,7 @@ public interface BlockedIpRepository extends JpaRepository<BlockedIp, Long> {
     List<BlockedIp> findByBlockedUntilAfterOrderByBlockedUntilDesc(LocalDateTime now);
 
     long countByBlockedUntilAfter(LocalDateTime now);
+
+    /** 해당 IP의 유효한(만료 전) 차단 레코드를 삭제한다(수동 해제). 삭제 건수 반환. */
+    long deleteByIpAndBlockedUntilAfter(String ip, LocalDateTime now);
 }

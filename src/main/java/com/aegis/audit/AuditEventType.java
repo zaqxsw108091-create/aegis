@@ -17,5 +17,9 @@ public enum AuditEventType {
     /** 리프레시 토큰 재사용 감지(탈취 의심) → 전체 세션 폐기 */
     TOKEN_REUSE,
     /** 로그아웃(리프레시 토큰 폐기) */
-    LOGOUT
+    LOGOUT,
+    /** 관리자가 IP 차단을 수동 해제 */
+    IP_UNBLOCKED,
+    /** 관리자가 계정 잠금을 수동 해제 */
+    ACCOUNT_UNLOCKED
 }
