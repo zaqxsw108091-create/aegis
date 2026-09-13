@@ -39,7 +39,7 @@ PostgreSQL과 함께 컨테이너로 띄우고 싶을 때만. https://www.docker
 1. `aegis` 폴더에서 **`run.bat` 더블클릭**
 2. 검은 창이 열리고 서버가 켜짐 (처음엔 20~40초)
 3. 잠시 후 **브라우저가 자동으로 관리자 대시보드를 연다**
-4. 로그인 창: **아이디 `admin` / 비밀번호 `admin1234`**
+4. 로그인 창: **아이디 `daeyoung0` / 비밀번호 `dae0`**
 
 끄기: 검은 창 닫기 또는 **`stop.bat` 더블클릭**
 
@@ -70,7 +70,7 @@ Aegis를 쓰는 입구는 **3개**다. 순서대로 해보자.
 
 ### 3-1. 관리자 대시보드 — "보안 관제실" 👮
 - 주소: **http://localhost:8080/admin/dashboard**
-- 로그인: `admin` / `admin1234`
+- 로그인: `daeyoung0` / `dae0`
 - 보이는 것: 전체 이벤트 수 / 로그인 실패(누적·24시간) / 차단된 IP 목록 / 최근 보안 사건 50개(누가·언제·어디서·무슨 일·결과)
 - 쓰는 법: 위쪽 **"새로고침"** 을 누르면 최신 상태로 갱신된다. 처음엔 전부 0 — 정상(아직 사건이 없어서).
 
@@ -154,8 +154,8 @@ $env:AEGIS_ALERT_WEBHOOK = "https://hooks.slack.com/services/여러분의훅주�
 
 | 항목 | 값 |
 |---|---|
-| 관리자 계정 (dev 전용) | `admin` / `admin1234` |
-| 일반 계정 (dev 전용) | `user` / `user1234` |
+| 관리자 계정 (dev 전용) | `daeyoung0` / `dae0` |
+| 일반 계정 (dev 전용) | `admin` / `12340` (이름은 admin이지만 **일반 권한**) |
 | 서버 확인 | http://localhost:8080/health |
 | 대시보드 | http://localhost:8080/admin/dashboard |
 | API 조종석(Swagger) | http://localhost:8080/swagger-ui.html |

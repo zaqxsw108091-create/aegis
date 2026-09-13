@@ -32,8 +32,9 @@ public class DevDataSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        seed("admin", "admin1234", Role.ADMIN);
-        seed("user", "user1234", Role.USER);
+        // 관리자: daeyoung0 / 일반 사용자: admin (이름은 admin 이지만 권한은 USER)
+        seed("daeyoung0", "dae0", Role.ADMIN);
+        seed("admin", "12340", Role.USER);
     }
 
     private void seed(String username, String rawPassword, Role role) {

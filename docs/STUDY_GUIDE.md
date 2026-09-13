@@ -200,7 +200,7 @@ com.aegis
   - REST API: `/api/admin/dashboard/events`(최근 이벤트), `/blocked-ips`(차단 IP), `/stats`(요약+메트릭).
   - 웹 화면: `/admin/dashboard`(Thymeleaf) — 요약 카드/메트릭/유형별 집계/차단 IP/최근 이벤트 표.
   - **ADMIN 권한 필수**. 데이터는 `audit_log`/`blocked_ip`/메트릭에서 모음.
-- **직접 확인**: 브라우저 `/admin/dashboard` → `admin/admin1234` 로그인.
+- **직접 확인**: 브라우저 `/admin/dashboard` → `daeyoung0/dae0` 로그인.
 - **코드**: `dashboard/DashboardController`(API), `dashboard/DashboardViewController`+`templates/dashboard.html`(화면), `dashboard/DashboardService`.
 - **한마디**: "관리자가 보안 상황을 한 화면에서 보는 관제실입니다."
 
@@ -209,7 +209,7 @@ com.aegis
 - **왜**: Prometheus/Grafana 같은 모니터링 도구가 읽어가 그래프·알림으로 쓰려고.
 - **어떻게 동작**: `aegis_detection_login_failures_total`, `ip_blocked_total`, `rate_limited_total` 카운터를
   `/actuator/prometheus`에 노출(인증 필요). 사건이 생길 때마다 +1.
-- **직접 확인**: `curl.exe -u admin:admin1234 http://localhost:8080/actuator/prometheus | findstr aegis_detection`
+- **직접 확인**: `curl.exe -u daeyoung0:dae0 http://localhost:8080/actuator/prometheus | findstr aegis_detection`
 - **코드**: `detection/DetectionMetrics`.
 - **한마디**: "탐지·차단 횟수를 모니터링 도구가 읽을 수 있는 숫자로 내보냅니다."
 
@@ -289,7 +289,7 @@ com.aegis
 ---
 
 ## 7. 직접 해보며 익히는 순서 (추천)
-1. `run.bat` 더블클릭 → 대시보드 로그인(`admin`/`admin1234`)으로 "관제실" 확인.
+1. `run.bat` 더블클릭 → 대시보드 로그인(`daeyoung0`/`dae0`)으로 "관제실" 확인.
 2. Swagger(`/swagger-ui.html`)에서 회원가입→로그인→`/api/me` 흐름 체험.
 3. 일부러 로그인 실패 몇 번 → 대시보드 새로고침 → 숫자/이벤트가 쌓이는 것 관찰.
 4. (마지막에) 레이트리밋 429, IP 차단 403 체험 → 막히면 앱 재시작.
