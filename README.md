@@ -63,6 +63,73 @@ HTTP 요청 → │ IpBlockFilter → RateLimitFilter → JwtAuthenticationFilte
 
 > 후속 과제(선택): Spotless/Checkstyle, 분산 레이트리밋(Redis), 2FA(TOTP), 대시보드 그래프/수동 차단.
 
+## 🚀 처음 쓰는 법 (5분 시작 가이드)
+프로그래밍을 몰라도 따라 할 수 있게 순서대로 적었습니다. 막히면 [docs/MANUAL.md](docs/MANUAL.md)를 보세요.
+
+### 1단계. 준비물
+- **Java 21** 하나만 있으면 됩니다. 터미널에서 `java -version` 을 쳤을 때 `21` 이 보이면 OK.
+  (없다면 [Adoptium Temurin 21](https://adoptium.net/) 설치)
+- 이 프로젝트 폴더 (`git clone` 으로 받거나 ZIP 다운로드)
+
+### 2단계. 켜기
+Windows는 폴더의 **`run.bat` 더블클릭**이 가장 쉽습니다. 터미널을 쓴다면:
+```bash
+bash gradlew bootRun        # 처음엔 라이브러리를 내려받느라 몇 분 걸립니다
+```
+> `./gradlew` 가 "Permission denied" 로 안 되면 위처럼 앞에 `bash` 를 붙이세요.
+
+몇 분 뒤 다른 터미널에서 확인합니다. `{"status":"UP"}` 이 나오면 **켜진 것**입니다.
+```bash
+curl http://localhost:8080/health
+```
+끌 때는 실행 중인 터미널에서 `Ctrl+C`.
+
+### 3단계. 써보기 (눈으로 보기: 브라우저)
+| 주소 | 무엇인가 | 로그인 |
+|---|---|---|
+| http://localhost:8080/swagger-ui.html | 기능을 **클릭으로 시험**해 보는 화면 | 필요 없음 |
+| http://localhost:8080/admin/dashboard | **보안 관제 대시보드** (차단 IP·이벤트·통계) | 관리자 계정 |
+
+개발 모드(dev)에서는 시험용 계정이 자동으로 만들어집니다. 아이디/비밀번호는
+[docs/TEST_GUIDE.md](docs/TEST_GUIDE.md) 에 있습니다. (운영에서는 만들어지지 않습니다.)
+
+### 4단계. 써보기 (직접 해보기: 터미널)
+```bash
+# ① 회원가입 (아이디: 영문/숫자/밑줄, 비밀번호: 8~72자)
+curl -X POST http://localhost:8080/api/auth/signup \
+  -H "Content-Type: application/json" \
+  -d '{"username":"alice","password":"Str0ng!Passw0rd"}'
+
+# ② 로그인 → accessToken(입장권) 과 refreshToken(재발급권) 을 받습니다
+curl -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"alice","password":"Str0ng!Passw0rd"}'
+
+# ③ 받은 accessToken 으로 내 정보 보기 (<토큰> 자리에 붙여넣기)
+curl http://localhost:8080/api/me -H "Authorization: Bearer <토큰>"
+```
+
+### 5단계. 방어가 진짜 동작하는지 보기
+| 이렇게 해보면 | 이렇게 막힙니다 |
+|---|---|
+| 같은 계정에 **틀린 비밀번호 5번** | 6번째부터 `423` — 계정 15분 잠금 (맞는 비번도 거부) |
+| 로그인 실패를 **IP 기준 10번** 누적 | `403` — 그 IP가 10분간 자동 차단 |
+| 1분에 **60번 넘게** 요청 | `429` — 잠시 후 다시 시도 |
+| 가입 요청에 `"role":"ADMIN"` 몰래 끼우기 | `400` — 거부(권한 상승 불가) |
+| 일반 사용자가 관리자 API 호출 | `403` — 접근 거부 |
+| 한 번 쓴 refreshToken 을 다시 사용 | `401` — 탈취로 보고 그 사용자의 토큰 전부 폐기 |
+
+차단·실패 기록은 대시보드(`/admin/dashboard`)에서 바로 볼 수 있고, 관리자는 거기서
+IP 차단/해제와 계정 잠금 해제를 할 수 있습니다.
+
+### ⚠️ 처음 쓰는 분이 자주 겪는 일
+- **실수로 내 IP가 차단되면** 대시보드까지 403이 됩니다. 개발 모드(메모리 DB)에서는
+  **서버를 껐다 켜면** 풀립니다. 운영에서는 관리자 IP를 `aegis.security.whitelist` 에 넣어두세요.
+- **관리자 화면에서 본인 접속 IP를 직접 차단하지 마세요.** 스스로 잠깁니다.
+- 실행 후 `Ctrl+C` 로 끄지 않으면 8080 포트를 계속 쓰고 있어 다음 실행이 실패합니다.
+
+---
+
 ## 빌드 · 실행 (개발)
 > **빌드에는 JDK 21 권장.** 시스템 JDK가 22+ 뿐이면 Gradle 8.7이 구동되지 않으니 JDK 21을 설치해 사용한다.
 ```bash
