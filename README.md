@@ -61,7 +61,7 @@ HTTP 요청 → │ IpBlockFilter → RateLimitFilter → JwtAuthenticationFilte
 | P8 | 토큰 수명주기(Refresh 회전·재사용 감지 시 전체 폐기·로그아웃) | ✅ |
 | P9 | 보안 알림(IP 차단/토큰 재사용 → 웹훅 통지, 기본 비활성) | ✅ |
 
-> 후속 과제(선택): Spotless/Checkstyle, 분산 레이트리밋(Redis), 2FA(TOTP), 대시보드 그래프/수동 차단.
+> 후속 과제(선택): Spotless/Checkstyle, 분산 레이트리밋(Redis), 2FA(TOTP), 대시보드 시간대별 그래프.
 
 ## 🚀 처음 쓰는 법 (5분 시작 가이드)
 프로그래밍을 몰라도 따라 할 수 있게 순서대로 적었습니다. 막히면 [docs/MANUAL.md](docs/MANUAL.md)를 보세요.
@@ -77,8 +77,27 @@ git clone https://github.com/zaqxsw108091-create/aegis.git
 cd aegis
 ```
 
-### 2단계. 켜기
-Windows는 폴더의 **`run.bat` 더블클릭**이 가장 쉽습니다. 터미널을 쓴다면:
+### 2단계. 관리자 계정 정하기 (모든 기능을 쓰는 최고 권한 · 켜기 전에!)
+관리자(`ROLE_ADMIN`)는 대시보드, 관리자 API, IP 수동 차단/해제, 계정 잠금 해제, 메트릭을 모두 쓸 수 있는 계정입니다.
+**서버를 켜기 전에** 아이디와 비밀번호를 환경변수로 정해 주세요. (아이디: 영문/숫자/밑줄 3~50자, 비밀번호: 8~72자)
+
+| 환경 | 설정 방법 |
+|---|---|
+| Mac / Linux | `export AEGIS_ADMIN_USERNAME=myadmin` 과 `export AEGIS_ADMIN_PASSWORD='내가정한강한비번'` 입력 후 `bash gradlew bootRun` |
+| Windows (CMD) | `set AEGIS_ADMIN_USERNAME=myadmin` 과 `set AEGIS_ADMIN_PASSWORD=내가정한강한비번` 입력 후 `run.bat` |
+| Windows (PowerShell) | `$env:AEGIS_ADMIN_USERNAME="myadmin"` 과 `$env:AEGIS_ADMIN_PASSWORD="내가정한강한비번"` 입력 후 `.\run.bat` |
+| Docker Compose | 같은 두 변수를 `export` 한 뒤 `docker compose up --build` |
+
+3단계에서 켜면 콘솔에 `[ADMIN-BOOTSTRAP] 관리자 계정 생성: username=myadmin` 이 보입니다. 그러면 **대시보드**
+(`http://localhost:8080/admin/dashboard`)에서 그 아이디/비밀번호로 로그인하면 됩니다.
+- 같은 아이디가 이미 있으면 **아무것도 바꾸지 않습니다**(비밀번호·권한 덮어쓰기 없음).
+- 값이 없거나 형식이 틀리면 **계정을 만들지 않고** 경고만 남깁니다(값은 로그에 안 찍힘).
+- 비밀번호는 코드나 GitHub에 올리지 마세요. 환경변수로만 넣으세요.
+- 이미 가입한 일반 사용자를 관리자로 바꾸는 기능은 없습니다. 새 관리자 아이디를 만드세요.
+
+### 3단계. 켜기
+2단계에서 정한 값을 환경변수로 넣은 **같은 터미널 창**에서 켜세요. Windows는 `run.bat`, 그 외는 아래 명령입니다.
+(`run.bat` 을 그냥 더블클릭하면 관리자 계정이 만들어지지 않아 대시보드에 로그인할 수 없습니다.)
 ```bash
 bash gradlew bootRun        # 처음엔 라이브러리를 내려받느라 몇 분 걸립니다 (인터넷 필요)
 ```
@@ -90,33 +109,15 @@ curl http://localhost:8080/health
 ```
 끌 때는 실행 중인 터미널에서 `Ctrl+C`.
 
-### 2-2단계. 관리자 계정 만들기 (모든 기능을 쓰는 최고 권한)
-관리자(`ROLE_ADMIN`)는 대시보드, 관리자 API, IP 수동 차단/해제, 계정 잠금 해제, 메트릭을 모두 쓸 수 있는 계정입니다.
-**서버를 켜기 전에** 아이디와 비밀번호를 환경변수로 정해 주세요. (아이디: 영문/숫자/밑줄 3~50자, 비밀번호: 8~72자)
-
-| 환경 | 설정 방법 |
-|---|---|
-| Mac / Linux | `export AEGIS_ADMIN_USERNAME=myadmin` 과 `export AEGIS_ADMIN_PASSWORD='내가정한강한비번'` 입력 후 `bash gradlew bootRun` |
-| Windows (CMD) | `set AEGIS_ADMIN_USERNAME=myadmin` 과 `set AEGIS_ADMIN_PASSWORD=내가정한강한비번` 입력 후 `run.bat` |
-| Windows (PowerShell) | `$env:AEGIS_ADMIN_USERNAME="myadmin"` 과 `$env:AEGIS_ADMIN_PASSWORD="내가정한강한비번"` 입력 후 `.\run.bat` |
-| Docker Compose | 같은 두 변수를 `export` 한 뒤 `docker compose up --build` |
-
-켜지면 콘솔에 `[ADMIN-BOOTSTRAP] 관리자 계정 생성: username=myadmin` 이 보입니다. 이제 **대시보드**
-(`http://localhost:8080/admin/dashboard`)에서 그 아이디/비밀번호로 로그인하면 됩니다.
-- 같은 아이디가 이미 있으면 **아무것도 바꾸지 않습니다**(비밀번호·권한 덮어쓰기 없음).
-- 값이 없거나 형식이 틀리면 **계정을 만들지 않고** 경고만 남깁니다(값은 로그에 안 찍힘).
-- 비밀번호는 코드나 GitHub에 올리지 마세요. 환경변수로만 넣으세요.
-- 이미 가입한 일반 사용자를 관리자로 바꾸는 기능은 없습니다. 새 관리자 아이디를 만드세요.
-
-### 3단계. 써보기 (눈으로 보기: 브라우저)
+### 4단계. 써보기 (눈으로 보기: 브라우저)
 | 주소 | 무엇인가 | 로그인 |
 |---|---|---|
 | http://localhost:8080/swagger-ui.html | 기능을 **클릭으로 시험**해 보는 화면 | 필요 없음 |
 | http://localhost:8080/admin/dashboard | **보안 관제 대시보드** (차단 IP·이벤트·통계) | 관리자 계정 |
 
-대시보드는 **관리자 계정**이 필요합니다. 코드에 고정 계정은 없으니 아래 **"관리자 계정 만들기"** 로 먼저 만드세요.
+대시보드는 **관리자 계정**이 필요합니다. 코드에 고정 계정은 없으니 위의 **2단계(관리자 계정 정하기)** 에서 먼저 만드세요.
 
-### 4단계. 써보기 (직접 해보기: 터미널)
+### 5단계. 써보기 (직접 해보기: 터미널)
 ```bash
 # ① 회원가입 (아이디: 영문/숫자/밑줄, 비밀번호: 8~72자)
 curl -X POST http://localhost:8080/api/auth/signup \
@@ -132,7 +133,7 @@ curl -X POST http://localhost:8080/api/auth/login \
 curl http://localhost:8080/api/me -H "Authorization: Bearer <토큰>"
 ```
 
-### 5단계. 방어가 진짜 동작하는지 보기
+### 6단계. 방어가 진짜 동작하는지 보기
 | 이렇게 해보면 | 이렇게 막힙니다 |
 |---|---|
 | 같은 계정에 **틀린 비밀번호 5번** | 6번째부터 `423` — 계정 15분 잠금 (맞는 비번도 거부) |
@@ -160,7 +161,7 @@ IP 차단/해제와 계정 잠금 해제를 할 수 있습니다.
 | 폴더가 없다 / 새 컴퓨터 | 위의 `git clone ...` 을 다시 실행 |
 | Git이 없다 | GitHub의 *Code → Download ZIP* 을 다시 받아 압축 해제 |
 
-받은 뒤에는 2단계(켜기)부터 똑같이 하면 됩니다. 개발 모드의 데이터(H2)는 **메모리에만** 저장되므로
+받은 뒤에는 2단계(관리자 계정 정하기)부터 똑같이 하면 됩니다. 개발 모드의 데이터(H2)는 **메모리에만** 저장되므로
 끄면 사라지고, 코드를 지워도 잃을 것이 없습니다.
 
 ### 🧑‍⚖️ 평가자용 빠른 확인 (약 5분)
