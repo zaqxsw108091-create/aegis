@@ -39,7 +39,7 @@ PostgreSQL과 함께 컨테이너로 띄우고 싶을 때만. https://www.docker
 1. `aegis` 폴더에서 **`run.bat` 더블클릭**
 2. 검은 창이 열리고 서버가 켜짐 (처음엔 20~40초)
 3. 잠시 후 **브라우저가 자동으로 관리자 대시보드를 연다**
-4. 로그인 창: **아이디 `daeyoung0` / 비밀번호 `dae0nooli`**
+4. 로그인 창: **아이디 <관리자ID> / 비밀번호 <관리자비번>** (직접 정한 값. 만드는 법은 README "관리자 계정 만들기")
 
 끄기: 검은 창 닫기 또는 **`stop.bat` 더블클릭**
 
@@ -70,7 +70,7 @@ Aegis를 쓰는 입구는 **3개**다. 순서대로 해보자.
 
 ### 3-1. 관리자 대시보드 — "보안 관제실" 👮
 - 주소: **http://localhost:8080/admin/dashboard**
-- 로그인: `daeyoung0` / `dae0nooli`
+- 로그인: <관리자ID> / <관리자비번>
 - 보이는 것: 맨 위 **위협 수준 배너**(초록 정상 / 노랑 로그인 실패 감지 / 빨강 차단 진행 중) / 전체 이벤트 수 / 로그인 실패(누적·24시간) / 차단된 IP 목록 / 최근 보안 사건 50개(누가·언제·어디서·무슨 일·결과, 결과별 색 배지)
 - 30초마다 자동으로 새로고침된다(관제 화면처럼 켜두고 보면 됨).
 - **관리자가 직접 할 수 있는 조치**(버튼/입력창):
@@ -140,7 +140,7 @@ $env:AEGIS_ALERT_WEBHOOK = "https://hooks.slack.com/services/여러분의훅주�
 | 갑자기 모든 요청이 **403** | 내 IP가 차단됨(로그인 실패 10회) → **앱 재시작**하면 초기화 (dev는 메모리 DB) |
 | 갑자기 **429** | 분당 60회 초과 → 1분 기다리거나 재시작 |
 | 로그인이 **423** | 계정 잠금(5회 실패) → 15분 대기 or 재시작 |
-| admin 로그인 안 됨 | dev 모드인지 확인 — 검은 창에 `[DEV-SEED] 시드 계정 생성` 로그가 있어야 함 |
+| 관리자 로그인 안 됨 | 환경변수(`AEGIS_ADMIN_USERNAME`/`AEGIS_ADMIN_PASSWORD`)를 켜기 전에 설정했는지 확인 — 검은 창에 `[ADMIN-BOOTSTRAP] 관리자 계정 생성` 로그가 있어야 함 |
 | 포트 8080 이미 사용 중 | `stop.bat` 실행 후 다시 `run.bat` |
 
 ---
@@ -161,8 +161,8 @@ $env:AEGIS_ALERT_WEBHOOK = "https://hooks.slack.com/services/여러분의훅주�
 
 | 항목 | 값 |
 |---|---|
-| 관리자 계정 (dev 전용) | `daeyoung0` / `dae0nooli` |
-| 일반 계정 (dev 전용) | `people` / `admin123400` |
+| 관리자 계정 (dev 전용) | <관리자ID> / <관리자비번> |
+| 일반 계정 | 직접 가입 (`POST /api/auth/signup`) |
 | 서버 확인 | http://localhost:8080/health |
 | 대시보드 | http://localhost:8080/admin/dashboard |
 | API 조종석(Swagger) | http://localhost:8080/swagger-ui.html |

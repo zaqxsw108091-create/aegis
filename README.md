@@ -90,14 +90,31 @@ curl http://localhost:8080/health
 ```
 끌 때는 실행 중인 터미널에서 `Ctrl+C`.
 
+### 2-2단계. 관리자 계정 만들기 (모든 기능을 쓰는 최고 권한)
+관리자(`ROLE_ADMIN`)는 대시보드, 관리자 API, IP 수동 차단/해제, 계정 잠금 해제, 메트릭을 모두 쓸 수 있는 계정입니다.
+**서버를 켜기 전에** 아이디와 비밀번호를 환경변수로 정해 주세요. (아이디: 영문/숫자/밑줄 3~50자, 비밀번호: 8~72자)
+
+| 환경 | 설정 방법 |
+|---|---|
+| Mac / Linux | `export AEGIS_ADMIN_USERNAME=myadmin` 과 `export AEGIS_ADMIN_PASSWORD='내가정한강한비번'` 입력 후 `bash gradlew bootRun` |
+| Windows (CMD) | `set AEGIS_ADMIN_USERNAME=myadmin` 과 `set AEGIS_ADMIN_PASSWORD=내가정한강한비번` 입력 후 `run.bat` |
+| Windows (PowerShell) | `$env:AEGIS_ADMIN_USERNAME="myadmin"` 과 `$env:AEGIS_ADMIN_PASSWORD="내가정한강한비번"` 입력 후 `.\run.bat` |
+| Docker Compose | 같은 두 변수를 `export` 한 뒤 `docker compose up --build` |
+
+켜지면 콘솔에 `[ADMIN-BOOTSTRAP] 관리자 계정 생성: username=myadmin` 이 보입니다. 이제 **대시보드**
+(`http://localhost:8080/admin/dashboard`)에서 그 아이디/비밀번호로 로그인하면 됩니다.
+- 같은 아이디가 이미 있으면 **아무것도 바꾸지 않습니다**(비밀번호·권한 덮어쓰기 없음).
+- 값이 없거나 형식이 틀리면 **계정을 만들지 않고** 경고만 남깁니다(값은 로그에 안 찍힘).
+- 비밀번호는 코드나 GitHub에 올리지 마세요. 환경변수로만 넣으세요.
+- 이미 가입한 일반 사용자를 관리자로 바꾸는 기능은 없습니다. 새 관리자 아이디를 만드세요.
+
 ### 3단계. 써보기 (눈으로 보기: 브라우저)
 | 주소 | 무엇인가 | 로그인 |
 |---|---|---|
 | http://localhost:8080/swagger-ui.html | 기능을 **클릭으로 시험**해 보는 화면 | 필요 없음 |
 | http://localhost:8080/admin/dashboard | **보안 관제 대시보드** (차단 IP·이벤트·통계) | 관리자 계정 |
 
-개발 모드(dev)에서는 시험용 계정이 자동으로 만들어집니다. 아이디/비밀번호는
-[docs/TEST_GUIDE.md](docs/TEST_GUIDE.md) 에 있습니다. (운영에서는 만들어지지 않습니다.)
+대시보드는 **관리자 계정**이 필요합니다. 코드에 고정 계정은 없으니 아래 **"관리자 계정 만들기"** 로 먼저 만드세요.
 
 ### 4단계. 써보기 (직접 해보기: 터미널)
 ```bash
@@ -149,7 +166,7 @@ IP 차단/해제와 계정 잠금 해제를 할 수 있습니다.
 ### 🧑‍⚖️ 평가자용 빠른 확인 (약 5분)
 받은 코드를 그대로 검증하는 3가지 방법입니다.
 ```bash
-# ① 자동 테스트 52개 (서버 없이 실행. 레이트리밋·IP 자동 차단 포함 전체 검증)
+# ① 자동 테스트 56개 (서버 없이 실행. 레이트리밋·IP 자동 차단 포함 전체 검증)
 bash gradlew test                     # 결과: BUILD SUCCESSFUL
 
 # ② 서버를 켠 뒤, 다른 터미널에서 방어 기능 자동 점검(16개 항목)
@@ -192,6 +209,7 @@ java -jar build/libs/aegis-0.1.0.jar \
 ## 환경 변수 (prod)
 | 변수 | 설명 |
 |---|---|
+| `AEGIS_ADMIN_USERNAME` `AEGIS_ADMIN_PASSWORD` | (선택) 최초 관리자 계정. 둘 다 있으면 기동 시 ROLE_ADMIN 생성. 없으면 생성 안 함 |
 | `DB_HOST` `DB_PORT` `DB_NAME` `DB_USERNAME` `DB_PASSWORD` | PostgreSQL 접속 정보 |
 | `AEGIS_JWT_SECRET` | JWT 서명 시크릿(32바이트 이상, 기본값 없음 — 필수) |
 | `AEGIS_ALERT_WEBHOOK` | (선택) IP 차단/토큰 재사용 알림 웹훅 URL. 비우면 알림 비활성 |
@@ -203,8 +221,8 @@ java -jar build/libs/aegis-0.1.0.jar \
 - `ddl-auto=validate` 고정 — 스키마 변경은 `src/main/resources/db/migration/V{n}__*.sql` 추가로만.
 - **관리자 IP는 `aegis.security.whitelist`에 넣어라.** 관리자 본인 IP가 무차별 대입 탐지에 걸려
   차단되면 대시보드도 403이 되어 스스로 해제할 수 없다(화이트리스트 IP는 차단/레이트리밋 면제).
-- 관리자(ROLE_ADMIN) 계정은 시크릿 하드코딩을 피하기 위해 시드하지 않는다. 운영에서 DB로 특정
-  사용자 role을 ADMIN으로 승격해 사용한다.
+- 관리자(ROLE_ADMIN) 계정은 소스에 고정하지 않는다. 환경변수 `AEGIS_ADMIN_USERNAME` / `AEGIS_ADMIN_PASSWORD` 로
+  기동 시 생성한다(아래 "관리자 계정 만들기"). 비밀번호는 BCrypt 해시로만 저장되고 로그에 남지 않는다.
 - 프록시 뒤 배포 시 `server.forward-headers-strategy`(prod 기본 적용)로 실제 클라이언트 IP를 인식.
 
 ## 주요 엔드포인트

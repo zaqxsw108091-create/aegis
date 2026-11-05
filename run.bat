@@ -4,7 +4,7 @@ cd /d "%~dp0"
 
 echo ============================================================
 echo   Aegis security system
-echo   - Admin login:  daeyoung0 / dae0nooli
+echo   - Admin login:  the ID/password you chose (see README: Create admin)
 echo   - Dashboard:    http://localhost:8080/admin/dashboard
 echo   - To stop: close this window, press Ctrl+C, or run stop.bat
 echo ============================================================
