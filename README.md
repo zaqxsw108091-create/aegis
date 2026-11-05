@@ -69,14 +69,20 @@ HTTP 요청 → │ IpBlockFilter → RateLimitFilter → JwtAuthenticationFilte
 ### 1단계. 준비물
 - **Java 21** 하나만 있으면 됩니다. 터미널에서 `java -version` 을 쳤을 때 `21` 이 보이면 OK.
   (없다면 [Adoptium Temurin 21](https://adoptium.net/) 설치)
-- 이 프로젝트 폴더 (`git clone` 으로 받거나 ZIP 다운로드)
+- **Git** (코드를 받을 때만 필요. 없으면 GitHub 페이지의 *Code → Download ZIP* 으로 받아도 됩니다)
+
+### 1-2단계. GitHub에서 받기
+```bash
+git clone https://github.com/zaqxsw108091-create/aegis.git
+cd aegis
+```
 
 ### 2단계. 켜기
 Windows는 폴더의 **`run.bat` 더블클릭**이 가장 쉽습니다. 터미널을 쓴다면:
 ```bash
-bash gradlew bootRun        # 처음엔 라이브러리를 내려받느라 몇 분 걸립니다
+bash gradlew bootRun        # 처음엔 라이브러리를 내려받느라 몇 분 걸립니다 (인터넷 필요)
 ```
-> `./gradlew` 가 "Permission denied" 로 안 되면 위처럼 앞에 `bash` 를 붙이세요.
+> `bash gradlew ...` 는 어떤 환경에서도 동작합니다. (`./gradlew` 도 되지만, 권한 오류가 나면 `bash` 를 붙이세요.)
 
 몇 분 뒤 다른 터미널에서 확인합니다. `{"status":"UP"}` 이 나오면 **켜진 것**입니다.
 ```bash
@@ -125,8 +131,36 @@ IP 차단/해제와 계정 잠금 해제를 할 수 있습니다.
 ### ⚠️ 처음 쓰는 분이 자주 겪는 일
 - **실수로 내 IP가 차단되면** 대시보드까지 403이 됩니다. 개발 모드(메모리 DB)에서는
   **서버를 껐다 켜면** 풀립니다. 운영에서는 관리자 IP를 `aegis.security.whitelist` 에 넣어두세요.
-- **관리자 화면에서 본인 접속 IP를 직접 차단하지 마세요.** 스스로 잠깁니다.
+- 관리자가 대시보드에서 **지금 접속 중인 본인 IP를 차단하려 하면 거부**됩니다(스스로 잠김 방지).
+  다만 다른 컴퓨터/폰 IP를 차단하는 것은 정상 동작입니다.
 - 실행 후 `Ctrl+C` 로 끄지 않으면 8080 포트를 계속 쓰고 있어 다음 실행이 실패합니다.
+
+### 🔄 최신 버전 받기 (언제든 GitHub에서 다시 받아 쓰기)
+컴퓨터를 바꿨거나 폴더를 지웠어도 **GitHub에 모든 코드가 있으니** 다시 받으면 됩니다.
+| 상황 | 방법 |
+|---|---|
+| 이미 받아둔 폴더가 있다 | 폴더 안에서 `git pull` |
+| 폴더가 없다 / 새 컴퓨터 | 위의 `git clone ...` 을 다시 실행 |
+| Git이 없다 | GitHub의 *Code → Download ZIP* 을 다시 받아 압축 해제 |
+
+받은 뒤에는 2단계(켜기)부터 똑같이 하면 됩니다. 개발 모드의 데이터(H2)는 **메모리에만** 저장되므로
+끄면 사라지고, 코드를 지워도 잃을 것이 없습니다.
+
+### 🧑‍⚖️ 평가자용 빠른 확인 (약 5분)
+받은 코드를 그대로 검증하는 3가지 방법입니다.
+```bash
+# ① 자동 테스트 52개 (서버 없이 실행. 레이트리밋·IP 자동 차단 포함 전체 검증)
+bash gradlew test                     # 결과: BUILD SUCCESSFUL
+
+# ② 서버를 켠 뒤, 다른 터미널에서 방어 기능 자동 점검(16개 항목)
+bash gradlew bootRun
+bash scripts/verify.sh                # 결과: 통과 16 / 실패 0
+
+# ③ 눈으로 확인: 브라우저로 /swagger-ui.html, /admin/dashboard 접속
+```
+- 평가 항목별 근거 위치: 방어 정책 [docs/SECURITY.md](docs/SECURITY.md), 기능 시험 레시피 [docs/TEST_GUIDE.md](docs/TEST_GUIDE.md),
+  한계·책임 있는 사용 [SECURITY.md](SECURITY.md), 테스트 코드 `src/test/java/com/aegis/`
+- 한계: 레이트리밋/IP 차단 상태는 단일 서버 메모리·DB 기준이며, 분산 환경(Redis) 구현은 후속 과제입니다.
 
 ---
 

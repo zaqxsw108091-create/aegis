@@ -46,10 +46,15 @@ public class AdminActionController {
     public String blockIp(@RequestParam String ip,
                           @RequestParam(defaultValue = "10") int minutes,
                           @RequestParam(defaultValue = "") String reason,
-                          Authentication auth) {
+                          Authentication auth,
+                          HttpServletRequest request) {
         String target = ip == null ? "" : ip.trim();
         if (!IP_PATTERN.matcher(target).matches() || minutes < 1 || minutes > MAX_BLOCK_MINUTES) {
             return redirect("invalid");
+        }
+        // 자기 잠금 방지: 지금 요청 중인 관리자 본인의 IP는 수동 차단할 수 없다.
+        if (target.equals(request.getRemoteAddr())) {
+            return redirect("self_block");
         }
         String why = reason.isBlank() ? "관리자 수동 차단" : reason.trim();
         if (why.length() > MAX_REASON_LENGTH) {

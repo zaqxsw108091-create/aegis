@@ -97,6 +97,15 @@ class AdminActionTest {
 
     @Test
     @WithMockUser(roles = "ADMIN")
+    void 관리자_본인_IP는_수동차단할_수_없다() throws Exception {
+        // MockMvc 의 기본 원격 주소는 127.0.0.1 — 본인 IP 차단은 거부되어야 한다
+        mvc.perform(post("/admin/blocked-ips").with(csrf()).param("ip", "127.0.0.1"))
+                .andExpect(redirectedUrl("/admin/dashboard?msg=self_block"));
+        assertThat(blockedIpRepository.count()).isZero();
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
     void 잘못된_IP_형식은_거부된다() throws Exception {
         mvc.perform(post("/admin/blocked-ips").with(csrf()).param("ip", "not an ip!"))
                 .andExpect(redirectedUrl("/admin/dashboard?msg=invalid"));
