@@ -56,12 +56,10 @@ brute force, request flooding, SQL injection, XSS, CSRF, and unauthorized access
 ```
 Verify: `http://localhost:8080/health` → `{"status":"UP"}`
 
-**Dev-only seeded accounts** (created automatically in the `dev` profile, never in `prod`):
-
-| Username | Password | Role |
-|---|---|---|
-| `daeyoung0` | `dae0nooli` | `ROLE_ADMIN` |
-| `people` | `admin123400` | `ROLE_USER` |
+**Accounts:** no credentials are hard-coded. Create the first admin by setting two environment variables before starting
+(`AEGIS_ADMIN_USERNAME`: letters/digits/underscore 3-50 chars, `AEGIS_ADMIN_PASSWORD`: 8-72 chars); the account is created as `ROLE_ADMIN`
+at startup (never overwritten if it exists; the password is stored only as a BCrypt hash and never logged).
+Regular users sign up via `POST /api/auth/signup`. In this guide `<ADMIN_ID>` / `<ADMIN_PW>` mean the values you chose.
 
 ### B) Docker Compose (app + PostgreSQL, prod profile)
 ```bash
@@ -96,7 +94,7 @@ Open **Swagger UI**: `http://localhost:8080/swagger-ui.html`
 6. **Log out** — `POST /api/auth/logout` with the `refreshToken` → `204`, token revoked.
 
 ### The admin dashboard
-`http://localhost:8080/admin/dashboard` (log in as `daeyoung0` / `dae0nooli`)
+`http://localhost:8080/admin/dashboard` (log in as <관리자ID> / <관리자비번>)
 A dark SOC-style console that auto-refreshes every 30 seconds. It shows a **threat-level banner**
 (green = secure, amber = login failures in the last 24h, red = an IP is currently blocked), totals,
 Micrometer counters, per-type event counts, currently blocked IPs, and the 50 most recent security
@@ -124,7 +122,7 @@ TOKEN=$(curl -s -X POST localhost:8080/api/auth/login -H 'Content-Type: applicat
 curl -s localhost:8080/api/me -H "Authorization: Bearer $TOKEN"
 
 # admin API (basic auth also works in dev)
-curl -s -u daeyoung0:dae0nooli localhost:8080/api/admin/dashboard/stats
+curl -s -u <관리자ID>:<관리자비번> localhost:8080/api/admin/dashboard/stats
 ```
 
 ---
@@ -221,7 +219,7 @@ IpBlockFilter (403) → RateLimitFilter (429) → JwtAuthenticationFilter → CS
 | Everything returns **403** | Your IP got blocked by brute-force detection → restart the app (dev) or wait for expiry |
 | **429** on every request | Rate limit exceeded → wait a minute |
 | Login returns **423** | Account locked after 5 failures → wait 15 minutes or restart (dev) |
-| `admin` login fails | Not running the `dev` profile — check the log for `[DEV-SEED]` |
+| Admin login fails | Admin env vars not set or invalid — check the log for `[ADMIN-BOOTSTRAP]` (the password is never logged) |
 | Build fails on startup | Java 21 required; Gradle 8.7 does not run on JDK 22+ |
 | Port 8080 in use | Stop the previous instance (`stop.bat` on Windows) |
 

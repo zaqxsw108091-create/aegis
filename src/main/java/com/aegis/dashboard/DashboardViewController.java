@@ -28,6 +28,7 @@ public class DashboardViewController {
             "blocked", "IP를 차단했습니다.",
             "unblocked", "IP 차단을 해제했습니다.",
             "unlocked", "계정 잠금을 해제하고 실패 횟수를 초기화했습니다.",
+            "self_block", "현재 접속 중인 본인 IP는 차단할 수 없습니다(스스로 잠기는 것을 방지).",
             "block_rejected", "차단할 수 없습니다(화이트리스트 IP이거나 이미 차단 중).",
             "notfound", "대상을 찾지 못했습니다(이미 해제됐거나 존재하지 않음).",
             "invalid", "입력값이 올바르지 않습니다.");

@@ -29,6 +29,9 @@ services:
       DB_PASSWORD: ${DB_PASSWORD:-aegis-local-pw}
       # 운영에서는 반드시 교체 (32바이트 이상)
       AEGIS_JWT_SECRET: ${AEGIS_JWT_SECRET:-change-me-in-production-please-32bytes-min}
+      # 최초 관리자 계정(선택). 둘 다 설정하면 기동 시 ADMIN 계정이 만들어진다. 미설정이면 만들지 않는다.
+      AEGIS_ADMIN_USERNAME: ${AEGIS_ADMIN_USERNAME:-}
+      AEGIS_ADMIN_PASSWORD: ${AEGIS_ADMIN_PASSWORD:-}
     ports:
       - "8080:8080"
 

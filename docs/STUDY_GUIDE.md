@@ -41,7 +41,7 @@ com.aegis
 ├── audit       📒 감사 로그(AuditLog) 기록
 ├── dashboard   📊 관리자 모니터링 API + 웹 화면
 ├── common      🧩 공통(전역 예외처리, 에러 응답 형식)
-└── config      ⚙️ 설정값 바인딩, dev 시드 계정, OpenAPI 설정
+└── config      ⚙️ 설정값 바인딩, 관리자 부트스트랩(AdminBootstrap), OpenAPI 설정
 ```
 - **DB 테이블**: `users`(계정), `blocked_ip`(차단 IP), `audit_log`(감사 로그), `flyway_schema_history`.
 - **프로파일**: `dev`(H2 메모리 DB, 기본) / `prod`(PostgreSQL).
@@ -210,7 +210,7 @@ com.aegis
   - **CSP와 화면의 관계**: CSP `default-src 'self'`는 페이지 안 인라인 CSS/JS를 차단한다. 그래서 스타일은
     같은 출처의 외부 파일(`/css/dashboard.css`)로 제공한다 — 보안을 약화(`unsafe-inline`)시키지 않는 올바른 방법.
   - **ADMIN 권한 필수**. 데이터는 `audit_log`/`blocked_ip`/메트릭에서 모음.
-- **직접 확인**: 브라우저 `/admin/dashboard` → `daeyoung0/dae0nooli` 로그인.
+- **직접 확인**: 브라우저 `/admin/dashboard` → <관리자ID>/<관리자비번> 로그인.
 - **코드**: `dashboard/DashboardController`(API), `dashboard/DashboardViewController`+`templates/dashboard.html`(화면), `dashboard/DashboardService`.
 - **한마디**: "관리자가 보안 상황을 한 화면에서 보는 관제실입니다."
 
@@ -219,7 +219,7 @@ com.aegis
 - **왜**: Prometheus/Grafana 같은 모니터링 도구가 읽어가 그래프·알림으로 쓰려고.
 - **어떻게 동작**: `aegis_detection_login_failures_total`, `ip_blocked_total`, `rate_limited_total` 카운터를
   `/actuator/prometheus`에 노출(인증 필요). 사건이 생길 때마다 +1.
-- **직접 확인**: `curl.exe -u daeyoung0:dae0nooli http://localhost:8080/actuator/prometheus | findstr aegis_detection`
+- **직접 확인**: `curl.exe -u <관리자ID>:<관리자비번> http://localhost:8080/actuator/prometheus | findstr aegis_detection`
 - **코드**: `detection/DetectionMetrics`.
 - **한마디**: "탐지·차단 횟수를 모니터링 도구가 읽을 수 있는 숫자로 내보냅니다."
 
@@ -299,7 +299,7 @@ com.aegis
 ---
 
 ## 7. 직접 해보며 익히는 순서 (추천)
-1. `run.bat` 더블클릭 → 대시보드 로그인(`daeyoung0`/`dae0nooli`)으로 "관제실" 확인.
+1. `run.bat` 더블클릭 → 대시보드 로그인(<관리자ID>/<관리자비번>)으로 "관제실" 확인.
 2. Swagger(`/swagger-ui.html`)에서 회원가입→로그인→`/api/me` 흐름 체험.
 3. 일부러 로그인 실패 몇 번 → 대시보드 새로고침 → 숫자/이벤트가 쌓이는 것 관찰.
 4. (마지막에) 레이트리밋 429, IP 차단 403 체험 → 막히면 앱 재시작.

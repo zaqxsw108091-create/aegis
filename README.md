@@ -63,6 +63,124 @@ HTTP 요청 → │ IpBlockFilter → RateLimitFilter → JwtAuthenticationFilte
 
 > 후속 과제(선택): Spotless/Checkstyle, 분산 레이트리밋(Redis), 2FA(TOTP), 대시보드 그래프/수동 차단.
 
+## 🚀 처음 쓰는 법 (5분 시작 가이드)
+프로그래밍을 몰라도 따라 할 수 있게 순서대로 적었습니다. 막히면 [docs/MANUAL.md](docs/MANUAL.md)를 보세요.
+
+### 1단계. 준비물
+- **Java 21** 하나만 있으면 됩니다. 터미널에서 `java -version` 을 쳤을 때 `21` 이 보이면 OK.
+  (없다면 [Adoptium Temurin 21](https://adoptium.net/) 설치)
+- **Git** (코드를 받을 때만 필요. 없으면 GitHub 페이지의 *Code → Download ZIP* 으로 받아도 됩니다)
+
+### 1-2단계. GitHub에서 받기
+```bash
+git clone https://github.com/zaqxsw108091-create/aegis.git
+cd aegis
+```
+
+### 2단계. 켜기
+Windows는 폴더의 **`run.bat` 더블클릭**이 가장 쉽습니다. 터미널을 쓴다면:
+```bash
+bash gradlew bootRun        # 처음엔 라이브러리를 내려받느라 몇 분 걸립니다 (인터넷 필요)
+```
+> `bash gradlew ...` 는 어떤 환경에서도 동작합니다. (`./gradlew` 도 되지만, 권한 오류가 나면 `bash` 를 붙이세요.)
+
+몇 분 뒤 다른 터미널에서 확인합니다. `{"status":"UP"}` 이 나오면 **켜진 것**입니다.
+```bash
+curl http://localhost:8080/health
+```
+끌 때는 실행 중인 터미널에서 `Ctrl+C`.
+
+### 2-2단계. 관리자 계정 만들기 (모든 기능을 쓰는 최고 권한)
+관리자(`ROLE_ADMIN`)는 대시보드, 관리자 API, IP 수동 차단/해제, 계정 잠금 해제, 메트릭을 모두 쓸 수 있는 계정입니다.
+**서버를 켜기 전에** 아이디와 비밀번호를 환경변수로 정해 주세요. (아이디: 영문/숫자/밑줄 3~50자, 비밀번호: 8~72자)
+
+| 환경 | 설정 방법 |
+|---|---|
+| Mac / Linux | `export AEGIS_ADMIN_USERNAME=myadmin` 과 `export AEGIS_ADMIN_PASSWORD='내가정한강한비번'` 입력 후 `bash gradlew bootRun` |
+| Windows (CMD) | `set AEGIS_ADMIN_USERNAME=myadmin` 과 `set AEGIS_ADMIN_PASSWORD=내가정한강한비번` 입력 후 `run.bat` |
+| Windows (PowerShell) | `$env:AEGIS_ADMIN_USERNAME="myadmin"` 과 `$env:AEGIS_ADMIN_PASSWORD="내가정한강한비번"` 입력 후 `.\run.bat` |
+| Docker Compose | 같은 두 변수를 `export` 한 뒤 `docker compose up --build` |
+
+켜지면 콘솔에 `[ADMIN-BOOTSTRAP] 관리자 계정 생성: username=myadmin` 이 보입니다. 이제 **대시보드**
+(`http://localhost:8080/admin/dashboard`)에서 그 아이디/비밀번호로 로그인하면 됩니다.
+- 같은 아이디가 이미 있으면 **아무것도 바꾸지 않습니다**(비밀번호·권한 덮어쓰기 없음).
+- 값이 없거나 형식이 틀리면 **계정을 만들지 않고** 경고만 남깁니다(값은 로그에 안 찍힘).
+- 비밀번호는 코드나 GitHub에 올리지 마세요. 환경변수로만 넣으세요.
+- 이미 가입한 일반 사용자를 관리자로 바꾸는 기능은 없습니다. 새 관리자 아이디를 만드세요.
+
+### 3단계. 써보기 (눈으로 보기: 브라우저)
+| 주소 | 무엇인가 | 로그인 |
+|---|---|---|
+| http://localhost:8080/swagger-ui.html | 기능을 **클릭으로 시험**해 보는 화면 | 필요 없음 |
+| http://localhost:8080/admin/dashboard | **보안 관제 대시보드** (차단 IP·이벤트·통계) | 관리자 계정 |
+
+대시보드는 **관리자 계정**이 필요합니다. 코드에 고정 계정은 없으니 아래 **"관리자 계정 만들기"** 로 먼저 만드세요.
+
+### 4단계. 써보기 (직접 해보기: 터미널)
+```bash
+# ① 회원가입 (아이디: 영문/숫자/밑줄, 비밀번호: 8~72자)
+curl -X POST http://localhost:8080/api/auth/signup \
+  -H "Content-Type: application/json" \
+  -d '{"username":"alice","password":"Str0ng!Passw0rd"}'
+
+# ② 로그인 → accessToken(입장권) 과 refreshToken(재발급권) 을 받습니다
+curl -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"alice","password":"Str0ng!Passw0rd"}'
+
+# ③ 받은 accessToken 으로 내 정보 보기 (<토큰> 자리에 붙여넣기)
+curl http://localhost:8080/api/me -H "Authorization: Bearer <토큰>"
+```
+
+### 5단계. 방어가 진짜 동작하는지 보기
+| 이렇게 해보면 | 이렇게 막힙니다 |
+|---|---|
+| 같은 계정에 **틀린 비밀번호 5번** | 6번째부터 `423` — 계정 15분 잠금 (맞는 비번도 거부) |
+| 로그인 실패를 **IP 기준 10번** 누적 | `403` — 그 IP가 10분간 자동 차단 |
+| 1분에 **60번 넘게** 요청 | `429` — 잠시 후 다시 시도 |
+| 가입 요청에 `"role":"ADMIN"` 몰래 끼우기 | `400` — 거부(권한 상승 불가) |
+| 일반 사용자가 관리자 API 호출 | `403` — 접근 거부 |
+| 한 번 쓴 refreshToken 을 다시 사용 | `401` — 탈취로 보고 그 사용자의 토큰 전부 폐기 |
+
+차단·실패 기록은 대시보드(`/admin/dashboard`)에서 바로 볼 수 있고, 관리자는 거기서
+IP 차단/해제와 계정 잠금 해제를 할 수 있습니다.
+
+### ⚠️ 처음 쓰는 분이 자주 겪는 일
+- **실수로 내 IP가 차단되면** 대시보드까지 403이 됩니다. 개발 모드(메모리 DB)에서는
+  **서버를 껐다 켜면** 풀립니다. 운영에서는 관리자 IP를 `aegis.security.whitelist` 에 넣어두세요.
+- 관리자가 대시보드에서 **지금 접속 중인 본인 IP를 차단하려 하면 거부**됩니다(스스로 잠김 방지).
+  다만 다른 컴퓨터/폰 IP를 차단하는 것은 정상 동작입니다.
+- 실행 후 `Ctrl+C` 로 끄지 않으면 8080 포트를 계속 쓰고 있어 다음 실행이 실패합니다.
+
+### 🔄 최신 버전 받기 (언제든 GitHub에서 다시 받아 쓰기)
+컴퓨터를 바꿨거나 폴더를 지웠어도 **GitHub에 모든 코드가 있으니** 다시 받으면 됩니다.
+| 상황 | 방법 |
+|---|---|
+| 이미 받아둔 폴더가 있다 | 폴더 안에서 `git pull` |
+| 폴더가 없다 / 새 컴퓨터 | 위의 `git clone ...` 을 다시 실행 |
+| Git이 없다 | GitHub의 *Code → Download ZIP* 을 다시 받아 압축 해제 |
+
+받은 뒤에는 2단계(켜기)부터 똑같이 하면 됩니다. 개발 모드의 데이터(H2)는 **메모리에만** 저장되므로
+끄면 사라지고, 코드를 지워도 잃을 것이 없습니다.
+
+### 🧑‍⚖️ 평가자용 빠른 확인 (약 5분)
+받은 코드를 그대로 검증하는 3가지 방법입니다.
+```bash
+# ① 자동 테스트 56개 (서버 없이 실행. 레이트리밋·IP 자동 차단 포함 전체 검증)
+bash gradlew test                     # 결과: BUILD SUCCESSFUL
+
+# ② 서버를 켠 뒤, 다른 터미널에서 방어 기능 자동 점검(16개 항목)
+bash gradlew bootRun
+bash scripts/verify.sh                # 결과: 통과 16 / 실패 0
+
+# ③ 눈으로 확인: 브라우저로 /swagger-ui.html, /admin/dashboard 접속
+```
+- 평가 항목별 근거 위치: 방어 정책 [docs/SECURITY.md](docs/SECURITY.md), 기능 시험 레시피 [docs/TEST_GUIDE.md](docs/TEST_GUIDE.md),
+  한계·책임 있는 사용 [SECURITY.md](SECURITY.md), 테스트 코드 `src/test/java/com/aegis/`
+- 한계: 레이트리밋/IP 차단 상태는 단일 서버 메모리·DB 기준이며, 분산 환경(Redis) 구현은 후속 과제입니다.
+
+---
+
 ## 빌드 · 실행 (개발)
 > **빌드에는 JDK 21 권장.** 시스템 JDK가 22+ 뿐이면 Gradle 8.7이 구동되지 않으니 JDK 21을 설치해 사용한다.
 ```bash
@@ -91,6 +209,7 @@ java -jar build/libs/aegis-0.1.0.jar \
 ## 환경 변수 (prod)
 | 변수 | 설명 |
 |---|---|
+| `AEGIS_ADMIN_USERNAME` `AEGIS_ADMIN_PASSWORD` | (선택) 최초 관리자 계정. 둘 다 있으면 기동 시 ROLE_ADMIN 생성. 없으면 생성 안 함 |
 | `DB_HOST` `DB_PORT` `DB_NAME` `DB_USERNAME` `DB_PASSWORD` | PostgreSQL 접속 정보 |
 | `AEGIS_JWT_SECRET` | JWT 서명 시크릿(32바이트 이상, 기본값 없음 — 필수) |
 | `AEGIS_ALERT_WEBHOOK` | (선택) IP 차단/토큰 재사용 알림 웹훅 URL. 비우면 알림 비활성 |
@@ -102,8 +221,8 @@ java -jar build/libs/aegis-0.1.0.jar \
 - `ddl-auto=validate` 고정 — 스키마 변경은 `src/main/resources/db/migration/V{n}__*.sql` 추가로만.
 - **관리자 IP는 `aegis.security.whitelist`에 넣어라.** 관리자 본인 IP가 무차별 대입 탐지에 걸려
   차단되면 대시보드도 403이 되어 스스로 해제할 수 없다(화이트리스트 IP는 차단/레이트리밋 면제).
-- 관리자(ROLE_ADMIN) 계정은 시크릿 하드코딩을 피하기 위해 시드하지 않는다. 운영에서 DB로 특정
-  사용자 role을 ADMIN으로 승격해 사용한다.
+- 관리자(ROLE_ADMIN) 계정은 소스에 고정하지 않는다. 환경변수 `AEGIS_ADMIN_USERNAME` / `AEGIS_ADMIN_PASSWORD` 로
+  기동 시 생성한다(아래 "관리자 계정 만들기"). 비밀번호는 BCrypt 해시로만 저장되고 로그에 남지 않는다.
 - 프록시 뒤 배포 시 `server.forward-headers-strategy`(prod 기본 적용)로 실제 클라이언트 IP를 인식.
 
 ## 주요 엔드포인트

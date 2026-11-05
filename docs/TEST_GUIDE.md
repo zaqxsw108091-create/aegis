@@ -13,16 +13,19 @@
 ./gradlew bootRun
 # 콘솔에 "Started AegisApplication" 이 뜨면 준비 완료. 종료는 Ctrl+C.
 ```
-- 기동 시 콘솔에 `[DEV-SEED] 시드 계정 생성: admin / user` 로그가 보인다.
+- 관리자 계정은 **직접 만들어야 합니다**(소스에 고정 계정 없음). 만드는 법: README의 "관리자 계정 만들기" 참고.
+  환경변수 설정 후 켜면 콘솔에 `[ADMIN-BOOTSTRAP] 관리자 계정 생성: username=...` 로그가 보입니다(비밀번호는 로그에 남지 않음).
 
-### 🔑 dev 시드 계정 (이 문서에서만 사용, 운영 금지)
-| 사용자 | 비밀번호 | 권한 |
+### 🔑 시험용 계정 준비
+| 사용자 | 만드는 법 | 권한 |
 |---|---|---|
-| `daeyoung0` | `dae0nooli` | ROLE_ADMIN |
-| `people` | `admin123400` | ROLE_USER |
+| `<관리자ID>` | 환경변수 `AEGIS_ADMIN_USERNAME` / `AEGIS_ADMIN_PASSWORD` 를 설정하고 서버를 켠다 | ROLE_ADMIN |
+| `<일반사용자ID>` | `POST /api/auth/signup` 으로 직접 가입한다(비밀번호 8~72자) | ROLE_USER |
+
+이 문서의 `<관리자ID>`, `<관리자비번>`, `<일반사용자ID>`, `<일반사용자비번>` 는 위에서 정한 값으로 바꿔 쓰세요.
 
 ### 보호 자원 호출 2가지 방법
-- **Basic 인증(가장 쉬움)**: `curl.exe -u daeyoung0:dae0nooli ...`
+- **Basic 인증(가장 쉬움)**: `curl.exe -u <관리자ID>:<관리자비번> ...`
 - **JWT**: 로그인으로 accessToken 받아 `-H "Authorization: Bearer <토큰>"`
 - **브라우저**: Swagger UI(`/swagger-ui.html`)의 **Authorize** 버튼에 토큰 입력
 
@@ -104,7 +107,7 @@ curl.exe -s -X POST http://localhost:8080/api/auth/refresh -H "Content-Type: app
 
 ### 3-9. 권한 거부 (일반 유저가 관리자 자원 접근)
 ```powershell
-curl.exe -s -o NUL -w "%{http_code}`n" -u people:admin123400 http://localhost:8080/api/admin/dashboard/stats
+curl.exe -s -o NUL -w "%{http_code}`n" -u <일반사용자ID>:<일반사용자비번> http://localhost:8080/api/admin/dashboard/stats
 ```
 ✅ 기대: `403` (ROLE_USER 는 ADMIN 자원 불가)
 
@@ -126,34 +129,34 @@ curl.exe -s -D - -o NUL http://localhost:8080/health
 ## 5. 대시보드 (P5) — 관리자 모니터링
 ### 5-1. REST API (Basic 인증)
 ```powershell
-curl.exe -s -u daeyoung0:dae0nooli http://localhost:8080/api/admin/dashboard/stats
-curl.exe -s -u daeyoung0:dae0nooli http://localhost:8080/api/admin/dashboard/events
-curl.exe -s -u daeyoung0:dae0nooli http://localhost:8080/api/admin/dashboard/blocked-ips
+curl.exe -s -u <관리자ID>:<관리자비번> http://localhost:8080/api/admin/dashboard/stats
+curl.exe -s -u <관리자ID>:<관리자비번> http://localhost:8080/api/admin/dashboard/events
+curl.exe -s -u <관리자ID>:<관리자비번> http://localhost:8080/api/admin/dashboard/blocked-ips
 ```
 ✅ 기대: `200`. `stats` 에는 전체 이벤트수/로그인 실패수/차단 IP수/유형별 집계/메트릭값.
 (3장에서 실패를 많이 만들었으면 `loginFailuresTotal` 이 올라가 있다)
 
 ### 5-2. 웹 화면 (브라우저)
 브라우저 → **http://localhost:8080/admin/dashboard**
-- Basic 인증 창이 뜨면 `daeyoung0` / `dae0nooli` 입력 → 어두운 관제 콘솔 화면이 뜬다.
+- Basic 인증 창이 뜨면 <관리자ID> / <관리자비번> 입력 → 어두운 관제 콘솔 화면이 뜬다.
 - 위협 수준 배너, 요약 카드, 메트릭, 이벤트 유형별 집계, **사용자 현황**, 차단 IP, 최근 이벤트 표가 보인다.
-✅ 비관리자(`people`)로 들어가면 `403`.
+✅ 일반 사용자(`<일반사용자ID>`)로 들어가면 `403`.
 
 ### 5-3. 관리자 조치 (브라우저에서 클릭)
 1. **수동 IP 차단**: 차단 IP 표 아래 입력창에 `203.0.113.5` / `10` / `테스트` 입력 → `IP 차단` 클릭
-   ✅ 상단에 "IP를 차단했습니다." 메시지, 차단 IP 표에 행 추가, 최근 이벤트에 `IP_BLOCKED`(행위자=daeyoung0)
+   ✅ 상단에 "IP를 차단했습니다." 메시지, 차단 IP 표에 행 추가, 최근 이벤트에 `IP_BLOCKED`(행위자=차단한 관리자 ID)
 2. **차단 해제**: 그 행의 `차단 해제` 클릭 ✅ 행이 사라지고 `IP_UNBLOCKED` 기록
 3. **계정 잠금 해제**: 3-7에서 잠근 `bob`이 사용자 현황 표에 `LOCKED` / 실패 5로 보인다 →
    `잠금 해제 / 초기화` 클릭 ✅ `ACTIVE` / 실패 0, 이제 `bob`으로 바로 로그인 가능
 4. (보안 확인) 이 버튼들은 CSRF 토큰이 자동으로 붙는다. curl로 토큰 없이 `POST /admin/blocked-ips` 를 보내면 `403`:
 ```powershell
-curl.exe -s -o NUL -w "%{http_code}`n" -u daeyoung0:dae0nooli -X POST http://localhost:8080/admin/blocked-ips -d "ip=1.2.3.4"
+curl.exe -s -o NUL -w "%{http_code}`n" -u <관리자ID>:<관리자비번> -X POST http://localhost:8080/admin/blocked-ips -d "ip=1.2.3.4"
 ```
 ✅ 기대: `403` (토큰 없는 상태 변경 거부 = CSRF 방어 동작)
 
 ### 5-4. 사용자별 실패 횟수 API
 ```powershell
-curl.exe -s -u daeyoung0:dae0nooli http://localhost:8080/api/admin/dashboard/users
+curl.exe -s -u <관리자ID>:<관리자비번> http://localhost:8080/api/admin/dashboard/users
 ```
 ✅ 기대: 각 사용자의 `failedLoginCount`, `locked`, `lockedUntil` 이 JSON으로 온다.
 
@@ -161,7 +164,7 @@ curl.exe -s -u daeyoung0:dae0nooli http://localhost:8080/api/admin/dashboard/use
 
 ## 6. 메트릭 (Actuator/Prometheus)
 ```powershell
-curl.exe -s -u daeyoung0:dae0nooli http://localhost:8080/actuator/prometheus | findstr aegis_detection
+curl.exe -s -u <관리자ID>:<관리자비번> http://localhost:8080/actuator/prometheus | findstr aegis_detection
 ```
 ✅ 기대: `aegis_detection_login_failures_total`, `aegis_detection_ip_blocked_total`,
 `aegis_detection_rate_limited_total` 가 보인다.
@@ -233,6 +236,6 @@ curl.exe -s -o NUL -w "health-after-block=%{http_code}`n" http://localhost:8080/
 ---
 
 ## 마무리 / 주의
-- 시드 계정(admin/user)과 H2는 **dev 전용**이다. 운영(prod)에선 시드되지 않으며 시크릿을 반드시 교체.
+- H2는 **dev 전용**이다. 고정 계정은 없고 관리자는 환경변수로 직접 만든다. 시크릿은 반드시 교체.
 - 시험 중 막히면(403/429) 대개 7장 때문이다. **앱 재시작**으로 초기화하면 된다.
 - 더 깊은 보안 정책/범위는 [SECURITY.md](../SECURITY.md), [docs/SECURITY.md](SECURITY.md) 참고.
