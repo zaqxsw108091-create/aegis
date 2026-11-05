@@ -84,7 +84,8 @@ cd aegis
 | 환경 | 설정 방법 |
 |---|---|
 | Mac / Linux | `export AEGIS_ADMIN_USERNAME=myadmin` 과 `export AEGIS_ADMIN_PASSWORD='내가정한강한비번'` 입력 후 `bash gradlew bootRun` |
-| Windows (CMD) | `set AEGIS_ADMIN_USERNAME=myadmin` 과 `set AEGIS_ADMIN_PASSWORD=내가정한강한비번` 입력 후 `run.bat` |
+| Windows (가장 쉬움) | **`run.bat` 더블클릭** → 검은 창이 `Admin ID:` / `Admin password:` 를 물으면 원하는 값을 입력 |
+| Windows (CMD) | `set AEGIS_ADMIN_USERNAME=myadmin` 과 `set AEGIS_ADMIN_PASSWORD=내가정한강한비번` 입력 후 `run.bat` (이미 설정돼 있으면 묻지 않음) |
 | Windows (PowerShell) | `$env:AEGIS_ADMIN_USERNAME="myadmin"` 과 `$env:AEGIS_ADMIN_PASSWORD="내가정한강한비번"` 입력 후 `.\run.bat` |
 | Docker Compose | 같은 두 변수를 `export` 한 뒤 `docker compose up --build` |
 
@@ -96,8 +97,7 @@ cd aegis
 - 이미 가입한 일반 사용자를 관리자로 바꾸는 기능은 없습니다. 새 관리자 아이디를 만드세요.
 
 ### 3단계. 켜기
-2단계에서 정한 값을 환경변수로 넣은 **같은 터미널 창**에서 켜세요. Windows는 `run.bat`, 그 외는 아래 명령입니다.
-(`run.bat` 을 그냥 더블클릭하면 관리자 계정이 만들어지지 않아 대시보드에 로그인할 수 없습니다.)
+Windows는 `run.bat` (더블클릭하면 2단계의 아이디/비밀번호를 물어봅니다. 입력하지 않고 Enter 를 누르면 관리자가 만들어지지 않아 대시보드에 로그인할 수 없습니다). 그 외 환경은 아래 명령으로 켭니다. 환경변수를 설정한 **같은 터미널 창**에서 실행하세요.
 ```bash
 bash gradlew bootRun        # 처음엔 라이브러리를 내려받느라 몇 분 걸립니다 (인터넷 필요)
 ```

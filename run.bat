@@ -4,7 +4,7 @@ cd /d "%~dp0"
 
 echo ============================================================
 echo   Aegis security system
-echo   - Admin login:  the ID/password you chose (see README: Create admin)
+echo   - Admin login:  the ID/password you type below (see README step 2)
 echo   - Dashboard:    http://localhost:8080/admin/dashboard
 echo   - To stop: close this window, press Ctrl+C, or run stop.bat
 echo ============================================================
@@ -61,6 +61,22 @@ if not defined APP_JAR (
     exit /b 1
 )
 echo [2/3] Jar: "%APP_JAR%"
+
+rem ---------------------------------------------------------------
+rem 2-2) Admin account: asked only when AEGIS_ADMIN_PASSWORD is not
+rem      already set in this window. Input is read raw by set /p, so
+rem      special characters in the password are safe.
+rem ---------------------------------------------------------------
+if defined AEGIS_ADMIN_PASSWORD goto admin_done
+echo.
+echo [Admin account] Choose the dashboard login.
+echo   ID: letters, digits, underscore, 3-50 chars. Password: 8-72 chars.
+echo   Just press Enter on ID to skip. Then no admin is created and you cannot log in.
+set /p "AEGIS_ADMIN_USERNAME=  Admin ID: "
+if not defined AEGIS_ADMIN_USERNAME goto admin_done
+set /p "AEGIS_ADMIN_PASSWORD=  Admin password: "
+:admin_done
+echo.
 
 rem ---------------------------------------------------------------
 rem 3) Free port 8080, open the dashboard shortly after start, run
