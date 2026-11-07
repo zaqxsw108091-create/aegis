@@ -11,6 +11,26 @@ Aegis는 인증, 침입 탐지, 레이트 리미팅, 보안 헤더, 감사 로�
 참조용 방어 시스템이다. 운영 기반(프로파일 분리·Flyway·Actuator/Prometheus·구조적 로깅·OpenAPI)을
 먼저 갖추고, 그 위에 인증/탐지/방어/대시보드 기능을 단계적으로 쌓았다.
 
+![Aegis 관제 콘솔](docs/images/dashboard-main.png)
+
+## 핵심 기능
+- **인증**: 회원가입/로그인/로그아웃, BCrypt(12) 비밀번호 해싱, JWT Access+Refresh(회전·재사용
+  탐지 시 전체 세션 폐기)
+- **무차별 대입 방어**: 계정 단위 로그인 실패 5회 → 15분 잠금, IP 단위 실패 10회(여러 계정 합산)
+  → 10분 전역 차단
+- **요청 폭주 방어**: IP당 분당 60회 레이트 리미팅(429), 화이트리스트 예외
+- **입력검증·출력인코딩**: SQLi(전 구간 JPA 파라미터 바인딩), XSS(자동 이스케이프 + CSP), 권한
+  상승 차단(모르는 JSON 필드 거부)
+- **관제 콘솔**(`/admin/dashboard`): 위협 수준 배너, 요약/메트릭, 사용자·차단 IP 현황, 최근 이벤트
+  — **사용자/IP를 클릭하면 그 대상의 전체 이력만 모아 보는 드릴다운(타임라인) 화면**으로 이동
+- **관리자 조치**: IP 수동 차단/해제, 계정 잠금 해제(CSRF 보호, 전부 감사 로그에 기록)
+- **감사 로그**: append-only, 이벤트 유형별 쉬운 설명을 화면에서 바로 확인 가능
+- **보안 알림**: IP 차단/토큰 재사용 시 웹훅 통지(선택, 기본 비활성)
+
+> 실제로 Burp Suite로 공격해 이 방어들이 작동하는지 검증한 결과는
+> **[docs/PENTEST_REPORT.md](docs/PENTEST_REPORT.md)**에, 5분 시연 대본은
+> **[docs/DEMO.md](docs/DEMO.md)**에 있다.
+
 ## 방어 대상 공격 유형
 | 공격 | 방어 방식 |
 |---|---|
@@ -234,6 +254,7 @@ java -jar build/libs/aegis-0.1.0.jar \
 | GET | `/api/me` | 인증(Bearer) |
 | GET | `/api/admin/dashboard/{events,blocked-ips,stats,users}` | ROLE_ADMIN |
 | GET | `/admin/dashboard` | ROLE_ADMIN (웹 화면) |
+| GET | `/admin/dashboard/detail?actor=…` 또는 `?ip=…` | ROLE_ADMIN (웹 화면, 사용자/IP 드릴다운) |
 | POST | `/admin/blocked-ips` · `/admin/blocked-ips/unblock` · `/admin/users/unlock` | ROLE_ADMIN + CSRF (수동 차단/해제/잠금 해제) |
 | GET | `/api/admin/ping` | ROLE_ADMIN (권한 확인용 샘플) |
 | GET | `/actuator/health` `/info` `/prometheus` | 인증 |
@@ -249,6 +270,8 @@ java -jar build/libs/aegis-0.1.0.jar \
 - 🧭 전체 구조·UI 한눈에 보기: [docs/OVERVIEW.md](docs/OVERVIEW.md)
 - 📚 기능 완전 정복(설명·발표용): [docs/STUDY_GUIDE.md](docs/STUDY_GUIDE.md)
 - 🧪 기능 시험 레시피: [docs/TEST_GUIDE.md](docs/TEST_GUIDE.md)
+- 🎤 5분 시연 대본(면접·강사 상담용): [docs/DEMO.md](docs/DEMO.md)
+- 🛡️ 실제 공격(Burp Suite) 테스트 보고서: [docs/PENTEST_REPORT.md](docs/PENTEST_REPORT.md)
 
 **Usage (English)**
 - 📗 **Install → run → use → tune**: [docs/USAGE.en.md](docs/USAGE.en.md)
