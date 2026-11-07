@@ -28,8 +28,21 @@
         </nav>
     </header>
 
+    <!-- 처음 보는 사람을 위한 한 줄 소개 -->
+    <section class="intro">
+        <p>
+            이 화면은 <strong>Aegis</strong>가 지키고 있는 애플리케이션의 보안 상태를 보여주는 <strong>관제 콘솔</strong>입니다.
+            아래에서 로그인 시도, 차단된 접속, 요청 폭주 같은 일을 실시간으로 확인하고, 필요하면 직접 차단·해제 조치를 할 수 있습니다.
+        </p>
+        <ul class="legend">
+            <li><span class="dot dot-ok"></span> <b>초록(ACTIVE/SUCCESS)</b> — 정상</li>
+            <li><span class="dot dot-warn"></span> <b>노랑(FAILURE)</b> — 실패했지만 아직 차단은 아님</li>
+            <li><span class="dot dot-danger"></span> <b>빨강(LOCKED/BLOCKED)</b> — 잠금·차단된 상태</li>
+        </ul>
+    </section>
+
     <!-- 위협 수준 배너 -->
-    <section class="status" th:classappend="'level-' + ${threatLevel}">
+    <section class="status" th:classappend="'level-' + ${threatLevel}" role="status">
         <span class="dot"></span>
         <div>
             <div class="label"
@@ -50,20 +63,37 @@
     <div class="notice" th:if="${message != null}" th:text="${message}">-</div>
 
     <!-- 요약 카드 -->
-    <h2>요약</h2>
+    <h2>요약 — 지금까지 기록된 사건(DB 기준)</h2>
     <div class="cards">
         <div class="card accent"><div class="n" th:text="${stats.totalEvents()}">0</div><div class="l">전체 보안 이벤트</div></div>
         <div class="card warn"><div class="n" th:text="${stats.loginFailuresTotal()}">0</div><div class="l">로그인 실패 (누적)</div></div>
         <div class="card warn"><div class="n" th:text="${stats.loginFailuresLast24h()}">0</div><div class="l">로그인 실패 (24시간)</div></div>
-        <div class="card danger"><div class="n" th:text="${stats.activeBlockedIps()}">0</div><div class="l">차단 중인 IP</div></div>
+        <div class="card danger"><div class="n" th:text="${stats.activeBlockedIps()}">0</div><div class="l">차단 중인 IP (지금 이 순간)</div></div>
     </div>
 
     <!-- 메트릭 -->
-    <h2>실시간 메트릭 (Micrometer → Prometheus)</h2>
+    <h2>서버 가동 카운터 — 모니터링 도구(Prometheus/Grafana) 연동용</h2>
+    <p class="hint">
+        위 "요약"은 데이터베이스에 쌓인 기록이고, 아래 세 숫자는 <b>서버를 마지막으로 켠 뒤부터</b> 세는 별개의 카운터입니다.
+        서버를 다시 켜면 0부터 다시 셉니다. 사람이 직접 볼 숫자라기보다, Prometheus 같은 외부 모니터링 도구가 가져가 그래프로
+        그리는 데 쓰는 값입니다. <a th:href="@{/actuator/prometheus}">원본 보기 →</a>
+    </p>
     <div class="cards">
-        <div class="card"><div class="n" th:text="${stats.metrics().loginFailures()}">0</div><div class="l mono">aegis_detection_login_failures_total</div></div>
-        <div class="card"><div class="n" th:text="${stats.metrics().ipBlocked()}">0</div><div class="l mono">aegis_detection_ip_blocked_total</div></div>
-        <div class="card"><div class="n" th:text="${stats.metrics().rateLimited()}">0</div><div class="l mono">aegis_detection_rate_limited_total</div></div>
+        <div class="card">
+            <div class="n" th:text="${stats.metrics().loginFailures()}">0</div>
+            <div class="l">로그인 실패 횟수 (서버 가동 후 누적)</div>
+            <div class="l mono dim">aegis_detection_login_failures_total</div>
+        </div>
+        <div class="card">
+            <div class="n" th:text="${stats.metrics().ipBlocked()}">0</div>
+            <div class="l">IP를 차단한 횟수 (서버 가동 후 누적)</div>
+            <div class="l mono dim">aegis_detection_ip_blocked_total</div>
+        </div>
+        <div class="card">
+            <div class="n" th:text="${stats.metrics().rateLimited()}">0</div>
+            <div class="l">요청 폭주로 거부한 횟수 (서버 가동 후 누적)</div>
+            <div class="l mono dim">aegis_detection_rate_limited_total</div>
+        </div>
     </div>
 
     <!-- 유형별 집계 -->
@@ -82,6 +112,10 @@
 
     <!-- 사용자 현황: 로그인 실패 횟수 / 잠금 상태 / 잠금 해제 -->
     <h2>사용자 현황 (로그인 실패 횟수 · 계정 잠금)</h2>
+    <p class="hint">
+        한 계정에서 비밀번호를 <b th:text="${lockoutMaxAttempts}">5</b>번 틀리면 그 계정이 자동으로
+        <b th:text="${lockMinutes}">15</b>분간 잠깁니다(LOCKED). 아래 "잠금 해제 / 초기화"를 누르면 즉시 풀리고 실패 횟수도 0이 됩니다.
+    </p>
     <div class="panel">
         <table>
             <thead><tr><th>사용자</th><th>권한</th><th>실패 횟수</th><th>상태</th><th>잠금 해제 예정</th><th>조치</th></tr></thead>
@@ -110,6 +144,11 @@
 
     <!-- 차단 IP: 목록 + 해제 + 수동 차단 -->
     <h2>차단 중인 IP (자동 만료 · 수동 해제 가능)</h2>
+    <p class="hint">
+        같은 IP에서 로그인 실패가(여러 계정 합산) <b th:text="${ipFailThreshold}">10</b>번 쌓이면 그 IP 전체가
+        <b th:text="${ipBlockMinutes}">10</b>분간 자동 차단됩니다. 또한 1분에 <b th:text="${rateLimitPerMinute}">60</b>번
+        넘게 요청하면 일시적으로 429(너무 많은 요청)로 거부됩니다. 계정 잠금과 달리 <b>IP 차단은 그 IP의 모든 요청을 막습니다.</b>
+    </p>
     <div class="panel">
         <table>
             <thead><tr><th>IP</th><th>사유</th><th>차단 시각</th><th>해제 예정</th><th>조치</th></tr></thead>
@@ -140,6 +179,7 @@
 
     <!-- 최근 이벤트 -->
     <h2>최근 보안 이벤트 (최대 50)</h2>
+    <p class="hint">"상세" 칸을 클릭하면 그 이벤트가 무엇을 뜻하는지 쉬운 말로 풀어서 보여줍니다.</p>
     <div class="panel">
         <table>
             <thead><tr><th>시각</th><th>유형</th><th>결과</th><th>행위자</th><th>IP</th><th>상세</th></tr></thead>
@@ -151,7 +191,12 @@
                     <td><span class="badge" th:classappend="'badge-' + ${e.result()}" th:text="${e.result()}">-</span></td>
                     <td th:text="${e.actor()}">-</td>
                     <td class="mono" th:text="${e.ip()}">-</td>
-                    <td class="muted" th:text="${e.detail()}">-</td>
+                    <td class="muted">
+                        <details>
+                            <summary th:text="${e.detail()}">-</summary>
+                            <p class="explain" th:text="${eventExplanations.get(e.type())}">-</p>
+                        </details>
+                    </td>
                 </tr>
             </tbody>
         </table>
