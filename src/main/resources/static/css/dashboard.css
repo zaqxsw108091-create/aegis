@@ -97,10 +97,11 @@ h2 {
 .card {
   padding: 14px 16px; border-radius: 12px; border: 1px solid var(--line);
   background: linear-gradient(180deg, var(--panel-2), var(--panel));
+  min-width: 0; /* 그리드 아이템이 긴 글자(예: 메트릭 원문 이름) 때문에 카드 밖으로 넓어지는 것 방지 */
 }
 .card .n { font-family: var(--mono); font-size: 28px; font-weight: 700; line-height: 1.1; }
-.card .l { color: var(--muted); font-size: 12px; margin-top: 6px; }
-.card .l.dim { margin-top: 2px; opacity: .6; font-size: 11px; }
+.card .l { color: var(--muted); font-size: 12px; margin-top: 6px; overflow-wrap: anywhere; }
+.card .l.dim { margin-top: 2px; opacity: .6; font-size: 11px; word-break: break-all; }
 .card.accent .n { color: var(--accent); }
 .card.warn .n   { color: var(--warn); }
 .card.danger .n { color: var(--danger); }

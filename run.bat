@@ -33,26 +33,23 @@ if not defined JAVA_EXE (
 echo [1/3] Java: "%JAVA_EXE%"
 
 rem ---------------------------------------------------------------
-rem 2) Make sure the application jar exists (build once if missing)
+rem 2) Always rebuild so the jar matches the current source code.
+rem    (Fixes a bug: after "git pull", the old jar was reused forever
+rem    unless build\libs was emptied by hand. Gradle finishes instantly
+rem    when nothing changed, so rebuilding every time is still fast.)
 rem ---------------------------------------------------------------
+echo [2/3] Building (this checks for code changes; may take a few minutes the first time)...
+call "%~dp0gradlew.bat" bootJar
+if errorlevel 1 (
+    echo.
+    echo [ERROR] Build failed. See the messages above.
+    echo.
+    pause
+    exit /b 1
+)
 set "APP_JAR="
 for %%F in ("%~dp0build\libs\aegis-*.jar") do (
     echo %%~nxF | find "plain" >nul || set "APP_JAR=%%~fF"
-)
-
-if not defined APP_JAR (
-    echo [2/3] Jar not found - building it once. This may take a few minutes...
-    call "%~dp0gradlew.bat" bootJar
-    if errorlevel 1 (
-        echo.
-        echo [ERROR] Build failed. See the messages above.
-        echo.
-        pause
-        exit /b 1
-    )
-    for %%F in ("%~dp0build\libs\aegis-*.jar") do (
-        echo %%~nxF | find "plain" >nul || set "APP_JAR=%%~fF"
-    )
 )
 if not defined APP_JAR (
     echo [ERROR] Could not find the built jar in build\libs.
