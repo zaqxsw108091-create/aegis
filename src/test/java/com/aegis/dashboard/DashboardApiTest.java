@@ -99,6 +99,70 @@ class DashboardApiTest {
     }
 
     @Test
+    void 상세_드릴다운은_비인증시_401() throws Exception {
+        mvc.perform(get("/admin/dashboard/detail").param("actor", "mallory")).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    void 상세_드릴다운은_비관리자_403() throws Exception {
+        mvc.perform(get("/admin/dashboard/detail").param("actor", "mallory")).andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void 파라미터_없이_상세로_가면_대시보드로_돌아간다() throws Exception {
+        mvc.perform(get("/admin/dashboard/detail"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                        .redirectedUrl("/admin/dashboard"));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void 행위자로_드릴다운하면_그_행위자의_이벤트만_보인다() throws Exception {
+        auditLogRepository.save(new AuditLog(AuditEventType.LOGIN_FAILURE, AuditResult.FAILURE,
+                "mallory", "203.0.113.10", "로그인 실패", LocalDateTime.now()));
+        auditLogRepository.save(new AuditLog(AuditEventType.LOGIN_FAILURE, AuditResult.FAILURE,
+                "someone-else", "198.51.100.5", "로그인 실패", LocalDateTime.now()));
+
+        mvc.perform(get("/admin/dashboard/detail").param("actor", "mallory"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("mallory")))
+                .andExpect(content().string(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("someone-else"))))
+                .andExpect(content().string(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString(" style="))));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void IP로_드릴다운하면_그_IP의_이벤트만_보인다() throws Exception {
+        auditLogRepository.save(new AuditLog(AuditEventType.LOGIN_FAILURE, AuditResult.FAILURE,
+                "mallory", "203.0.113.10", "로그인 실패", LocalDateTime.now()));
+        auditLogRepository.save(new AuditLog(AuditEventType.LOGIN_FAILURE, AuditResult.FAILURE,
+                "someone-else", "198.51.100.5", "로그인 실패", LocalDateTime.now()));
+
+        mvc.perform(get("/admin/dashboard/detail").param("ip", "203.0.113.10"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("203.0.113.10")))
+                .andExpect(content().string(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("198.51.100.5"))));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void 메인_대시보드에_드릴다운_링크가_있다() throws Exception {
+        auditLogRepository.save(new AuditLog(AuditEventType.LOGIN_FAILURE, AuditResult.FAILURE,
+                "mallory", "203.0.113.10", "로그인 실패", LocalDateTime.now()));
+
+        mvc.perform(get("/admin/dashboard"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("/admin/dashboard/detail?actor=mallory")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("/admin/dashboard/detail?ip=203.0.113.10")));
+    }
+
+    @Test
     void 대시보드_스타일시트는_인증없이_제공된다() throws Exception {
         // CSS 는 민감정보가 없고, 브라우저가 페이지와 함께 요청하므로 공개 경로여야 한다
         mvc.perform(get("/css/dashboard.css"))

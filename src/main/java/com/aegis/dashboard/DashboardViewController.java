@@ -1,6 +1,7 @@
 package com.aegis.dashboard;
 
 import com.aegis.config.AegisSecurityProperties;
+import com.aegis.dashboard.dto.AuditEventView;
 import com.aegis.dashboard.dto.DashboardStats;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -9,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -36,20 +38,10 @@ public class DashboardViewController {
             "notfound", "대상을 찾지 못했습니다(이미 해제됐거나 존재하지 않음).",
             "invalid", "입력값이 올바르지 않습니다.");
 
-    /**
-     * 이벤트 유형 → 처음 보는 사람도 이해할 수 있는 한 줄 설명.
-     * 최근 이벤트 표에서 "상세"를 펼치면 이 설명이 함께 보인다.
-     */
-    private static final Map<String, String> EVENT_EXPLANATIONS = Map.ofEntries(
-            Map.entry("LOGIN_SUCCESS", "아이디/비밀번호가 맞아 로그인에 성공했습니다. 정상 동작입니다."),
-            Map.entry("LOGIN_FAILURE", "아이디 또는 비밀번호가 틀렸습니다. 한 계정에서 일정 횟수 이상 쌓이면 그 계정이 자동으로 잠깁니다."),
-            Map.entry("IP_BLOCKED", "같은 IP에서 실패가 임계치를 넘어 자동으로 차단됐거나, 관리자가 수동으로 차단했습니다. 그 IP의 모든 요청이 일정 시간 거부됩니다."),
-            Map.entry("RATE_LIMITED", "같은 IP가 1분 안에 너무 많은 요청을 보내 일시적으로 거부됐습니다. 과도한 요청(DoS성 트래픽)을 막는 장치입니다."),
-            Map.entry("ACCESS_DENIED", "권한이 없는 자원에 접근하려다 거부됐습니다(예: 일반 사용자가 관리자 화면 접근 시도)."),
-            Map.entry("TOKEN_REUSE", "이미 한 번 사용된 refresh 토큰이 다시 들어왔습니다. 토큰이 탈취된 것으로 보고 해당 사용자의 모든 로그인 세션을 즉시 폐기했습니다."),
-            Map.entry("LOGOUT", "사용자가 로그아웃하며 토큰을 스스로 폐기했습니다."),
-            Map.entry("IP_UNBLOCKED", "관리자가 차단돼 있던 IP를 수동으로 풀어줬습니다."),
-            Map.entry("ACCOUNT_UNLOCKED", "관리자가 잠겨 있던 계정을 수동으로 풀고 실패 횟수를 0으로 되돌렸습니다."));
+    /** 한 번에 보여줄 "행위자/IP 상세" 드릴다운 이벤트 최대 개수. */
+    private static final int DETAIL_EVENT_LIMIT = 200;
+    /** 드릴다운 쿼리 파라미터(actor/ip)로 들어온 값의 최대 허용 길이(남용 방지용 방어적 상한). */
+    private static final int DETAIL_PARAM_MAX_LEN = 100;
 
     @GetMapping("/admin/dashboard")
     public String dashboard(@RequestParam(required = false) String msg, Model model) {
@@ -63,13 +55,54 @@ public class DashboardViewController {
         model.addAttribute("message", msg == null ? null : MESSAGES.get(msg));
         model.addAttribute("threatLevel", threatLevel(stats));
         model.addAttribute("generatedAt", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-        model.addAttribute("eventExplanations", EVENT_EXPLANATIONS);
+        model.addAttribute("eventExplanations", EventExplanations.MAP);
         model.addAttribute("lockoutMaxAttempts", lockout.maxFailedAttempts());
         model.addAttribute("lockMinutes", lockout.lockMinutes());
         model.addAttribute("ipFailThreshold", bruteforce.ipFailThreshold());
         model.addAttribute("ipBlockMinutes", bruteforce.ipBlockMinutes());
         model.addAttribute("rateLimitPerMinute", securityProperties.rateLimit().requestsPerMinute());
         return "dashboard";
+    }
+
+    /**
+     * 특정 행위자(사용자명 등) 또는 IP의 전체 이력만 모아서 보는 "드릴다운" 화면.
+     * 대시보드의 사용자 현황/차단 IP/최근 이벤트 표에서 이름·IP를 클릭하면 여기로 온다.
+     * actor/ip 둘 다 없으면(URL을 직접 손댄 경우) 메인 대시보드로 돌려보낸다.
+     */
+    @GetMapping("/admin/dashboard/detail")
+    public String detail(@RequestParam(required = false) String actor,
+                         @RequestParam(required = false) String ip,
+                         Model model) {
+        String a = clean(actor);
+        String i = clean(ip);
+        if (a == null && i == null) {
+            return "redirect:/admin/dashboard";
+        }
+        boolean byActor = a != null;
+        String subjectValue = byActor ? a : i;
+        List<AuditEventView> events = byActor
+                ? dashboardService.eventsByActor(subjectValue, DETAIL_EVENT_LIMIT)
+                : dashboardService.eventsByIp(subjectValue, DETAIL_EVENT_LIMIT);
+
+        model.addAttribute("subjectType", byActor ? "actor" : "ip");
+        model.addAttribute("subjectTypeLabel", byActor ? "행위자(사용자)" : "IP");
+        model.addAttribute("subjectValue", subjectValue);
+        model.addAttribute("events", events);
+        model.addAttribute("eventExplanations", EventExplanations.MAP);
+        model.addAttribute("generatedAt", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        return "dashboard-detail";
+    }
+
+    /** 공백만 있거나 너무 긴 쿼리 파라미터는 없는 것으로 취급한다. */
+    private static String clean(String raw) {
+        if (raw == null) {
+            return null;
+        }
+        String v = raw.trim();
+        if (v.isEmpty() || v.length() > DETAIL_PARAM_MAX_LEN) {
+            return null;
+        }
+        return v;
     }
 
     /**

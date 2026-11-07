@@ -65,6 +65,22 @@ public class DashboardService {
                 .stream().map(this::toView).toList();
     }
 
+    /** 특정 행위자(사용자명 등)의 전체 이력(드릴다운). 레드팀/모의해킹 관점의 "이 사람이 뭘 했나" 추적용. */
+    @Transactional(readOnly = true)
+    public List<AuditEventView> eventsByActor(String actor, int limit) {
+        int capped = Math.min(Math.max(limit, 1), MAX_EVENTS);
+        return auditLogRepository.findByActorOrderByCreatedAtDesc(actor, PageRequest.of(0, capped))
+                .stream().map(this::toView).toList();
+    }
+
+    /** 특정 IP의 전체 이력(드릴다운). "이 IP가 뭘 했나" 추적용. */
+    @Transactional(readOnly = true)
+    public List<AuditEventView> eventsByIp(String ip, int limit) {
+        int capped = Math.min(Math.max(limit, 1), MAX_EVENTS);
+        return auditLogRepository.findByIpOrderByCreatedAtDesc(ip, PageRequest.of(0, capped))
+                .stream().map(this::toView).toList();
+    }
+
     @Transactional(readOnly = true)
     public List<BlockedIpView> activeBlockedIps() {
         return blockedIpRepository.findByBlockedUntilAfterOrderByBlockedUntilDesc(LocalDateTime.now())

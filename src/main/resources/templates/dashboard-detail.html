@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title th:text="${subjectTypeLabel} + ' 상세 · ' + ${subjectValue} + ' — Aegis'">상세 — Aegis</title>
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}"/>
+</head>
+<body>
+<div class="wrap">
+
+    <header class="topbar">
+        <div class="brand">
+            <div class="logo">🛡️</div>
+            <div>
+                <h1>AEGIS SECURITY CONSOLE</h1>
+                <div class="sub">드릴다운 — 한 대상(사람/IP)의 전체 행적만 모아 보기</div>
+            </div>
+        </div>
+        <nav class="actions">
+            <a th:href="@{/admin/dashboard}">← 대시보드로</a>
+        </nav>
+    </header>
+
+    <section class="intro">
+        <p>
+            <span class="badge badge-SUCCESS" th:text="${subjectTypeLabel}">행위자</span>
+            <b class="mono subject-value" th:text="${subjectValue}">-</b>
+            와(과) 관련된 보안 이벤트를 <b>시간순으로 모아서</b> 보여줍니다.
+            레드팀/모의해킹 관점에서는 "이 계정 또는 이 IP가 그동안 무엇을 했는가"를 한눈에 추적하는 화면입니다.
+            최근 <span th:text="${events.size()}">0</span>건(최대 200건)을 보여줍니다.
+        </p>
+    </section>
+
+    <h2 id="timeline">타임라인</h2>
+    <p class="hint">"상세" 칸을 클릭하면 쉬운 설명이 펼쳐집니다. 행위자/IP를 클릭하면 그 대상으로 다시 드릴다운합니다.</p>
+    <div class="panel">
+        <table>
+            <thead><tr><th>시각</th><th>유형</th><th>결과</th><th>행위자</th><th>IP</th><th>상세</th></tr></thead>
+            <tbody>
+                <tr th:if="${events.isEmpty()}"><td colspan="6" class="empty">이 대상과 관련된 기록이 없습니다.</td></tr>
+                <tr th:each="e : ${events}">
+                    <td class="mono muted" th:text="${e.timestamp()}">-</td>
+                    <td class="mono" th:classappend="'type-' + ${e.type()}" th:text="${e.type()}">-</td>
+                    <td><span class="badge" th:classappend="'badge-' + ${e.result()}" th:text="${e.result()}">-</span></td>
+                    <td>
+                        <a class="subject-link" th:if="${e.actor() != null and !#strings.isEmpty(e.actor())}"
+                           th:href="@{/admin/dashboard/detail(actor=${e.actor()})}" th:text="${e.actor()}">-</a>
+                        <span th:unless="${e.actor() != null and !#strings.isEmpty(e.actor())}" class="muted">-</span>
+                    </td>
+                    <td class="mono">
+                        <a class="subject-link" th:if="${e.ip() != null and !#strings.isEmpty(e.ip())}"
+                           th:href="@{/admin/dashboard/detail(ip=${e.ip()})}" th:text="${e.ip()}">-</a>
+                        <span th:unless="${e.ip() != null and !#strings.isEmpty(e.ip())}" class="muted">-</span>
+                    </td>
+                    <td class="muted">
+                        <details>
+                            <summary th:text="${e.detail()}">-</summary>
+                            <p class="explain" th:text="${eventExplanations.get(e.type())}">-</p>
+                        </details>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <footer class="footer">
+        <span class="pill">Aegis v0.1.0</span>
+        <span class="pill mono" th:text="'갱신 ' + ${generatedAt}">-</span>
+        <span class="pill">방어·탐지·기록 전용 — 공격 도구 아님</span>
+    </footer>
+</div>
+</body>
+</html>
