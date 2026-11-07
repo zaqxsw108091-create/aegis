@@ -28,6 +28,16 @@
         </nav>
     </header>
 
+    <!-- 빠른 이동: 화면이 길어서 섹션으로 바로 가는 링크(자바스크립트 없이 앵커만 사용) -->
+    <nav class="jump">
+        <a href="#summary">요약</a>
+        <a href="#metrics">메트릭</a>
+        <a href="#by-type">유형별 집계</a>
+        <a href="#users">사용자</a>
+        <a href="#blocked-ips">차단 IP</a>
+        <a href="#events">최근 이벤트</a>
+    </nav>
+
     <!-- 처음 보는 사람을 위한 한 줄 소개 -->
     <section class="intro">
         <p>
@@ -63,7 +73,7 @@
     <div class="notice" th:if="${message != null}" th:text="${message}">-</div>
 
     <!-- 요약 카드 -->
-    <h2>요약 — 지금까지 기록된 사건(DB 기준)</h2>
+    <h2 id="summary">요약 — 지금까지 기록된 사건(DB 기준)</h2>
     <div class="cards">
         <div class="card accent"><div class="n" th:text="${stats.totalEvents()}">0</div><div class="l">전체 보안 이벤트</div></div>
         <div class="card warn"><div class="n" th:text="${stats.loginFailuresTotal()}">0</div><div class="l">로그인 실패 (누적)</div></div>
@@ -72,7 +82,7 @@
     </div>
 
     <!-- 메트릭 -->
-    <h2>서버 가동 카운터 — 모니터링 도구(Prometheus/Grafana) 연동용</h2>
+    <h2 id="metrics">서버 가동 카운터 — 모니터링 도구(Prometheus/Grafana) 연동용</h2>
     <p class="hint">
         위 "요약"은 데이터베이스에 쌓인 기록이고, 아래 세 숫자는 <b>서버를 마지막으로 켠 뒤부터</b> 세는 별개의 카운터입니다.
         서버를 다시 켜면 0부터 다시 셉니다. 사람이 직접 볼 숫자라기보다, Prometheus 같은 외부 모니터링 도구가 가져가 그래프로
@@ -97,7 +107,7 @@
     </div>
 
     <!-- 유형별 집계 -->
-    <h2>이벤트 유형별 집계</h2>
+    <h2 id="by-type">이벤트 유형별 집계</h2>
     <div class="panel">
         <table>
             <thead><tr><th>유형</th><th>건수</th></tr></thead>
@@ -111,10 +121,11 @@
     </div>
 
     <!-- 사용자 현황: 로그인 실패 횟수 / 잠금 상태 / 잠금 해제 -->
-    <h2>사용자 현황 (로그인 실패 횟수 · 계정 잠금)</h2>
+    <h2 id="users">사용자 현황 (로그인 실패 횟수 · 계정 잠금)</h2>
     <p class="hint">
         한 계정에서 비밀번호를 <b th:text="${lockoutMaxAttempts}">5</b>번 틀리면 그 계정이 자동으로
         <b th:text="${lockMinutes}">15</b>분간 잠깁니다(LOCKED). 아래 "잠금 해제 / 초기화"를 누르면 즉시 풀리고 실패 횟수도 0이 됩니다.
+        <b>사용자 이름을 클릭하면 그 사람의 전체 기록만 따로 볼 수 있습니다.</b>
     </p>
     <div class="panel">
         <table>
@@ -122,7 +133,9 @@
             <tbody>
                 <tr th:if="${users.isEmpty()}"><td colspan="6" class="empty">등록된 사용자 없음</td></tr>
                 <tr th:each="u : ${users}">
-                    <td class="mono" th:text="${u.username()}">-</td>
+                    <td class="mono">
+                        <a class="subject-link" th:href="@{/admin/dashboard/detail(actor=${u.username()})}" th:text="${u.username()}">-</a>
+                    </td>
                     <td class="mono muted" th:text="${u.role()}">-</td>
                     <td class="mono" th:classappend="${u.failedLoginCount() > 0} ? 'warn-text' : ''" th:text="${u.failedLoginCount()}">0</td>
                     <td>
@@ -143,11 +156,12 @@
     </div>
 
     <!-- 차단 IP: 목록 + 해제 + 수동 차단 -->
-    <h2>차단 중인 IP (자동 만료 · 수동 해제 가능)</h2>
+    <h2 id="blocked-ips">차단 중인 IP (자동 만료 · 수동 해제 가능)</h2>
     <p class="hint">
         같은 IP에서 로그인 실패가(여러 계정 합산) <b th:text="${ipFailThreshold}">10</b>번 쌓이면 그 IP 전체가
         <b th:text="${ipBlockMinutes}">10</b>분간 자동 차단됩니다. 또한 1분에 <b th:text="${rateLimitPerMinute}">60</b>번
         넘게 요청하면 일시적으로 429(너무 많은 요청)로 거부됩니다. 계정 잠금과 달리 <b>IP 차단은 그 IP의 모든 요청을 막습니다.</b>
+        <b>IP를 클릭하면 그 IP의 전체 기록만 따로 볼 수 있습니다.</b>
     </p>
     <div class="panel">
         <table>
@@ -155,7 +169,9 @@
             <tbody>
                 <tr th:if="${blockedIps.isEmpty()}"><td colspan="5" class="empty">차단된 IP 없음</td></tr>
                 <tr th:each="b : ${blockedIps}">
-                    <td class="mono" th:text="${b.ip()}">-</td>
+                    <td class="mono">
+                        <a class="subject-link" th:href="@{/admin/dashboard/detail(ip=${b.ip()})}" th:text="${b.ip()}">-</a>
+                    </td>
                     <td th:text="${b.reason()}">-</td>
                     <td class="mono muted" th:text="${b.blockedAt()}">-</td>
                     <td class="mono muted" th:text="${b.blockedUntil()}">-</td>
@@ -178,8 +194,11 @@
     </div>
 
     <!-- 최근 이벤트 -->
-    <h2>최근 보안 이벤트 (최대 50)</h2>
-    <p class="hint">"상세" 칸을 클릭하면 그 이벤트가 무엇을 뜻하는지 쉬운 말로 풀어서 보여줍니다.</p>
+    <h2 id="events">최근 보안 이벤트 (최대 50)</h2>
+    <p class="hint">
+        "상세" 칸을 클릭하면 그 이벤트가 무엇을 뜻하는지 쉬운 말로 풀어서 보여줍니다.
+        <b>행위자/IP를 클릭하면 그 대상의 전체 기록만 따로 볼 수 있습니다.</b>
+    </p>
     <div class="panel">
         <table>
             <thead><tr><th>시각</th><th>유형</th><th>결과</th><th>행위자</th><th>IP</th><th>상세</th></tr></thead>
@@ -189,8 +208,16 @@
                     <td class="mono muted" th:text="${e.timestamp()}">-</td>
                     <td class="mono" th:classappend="'type-' + ${e.type()}" th:text="${e.type()}">-</td>
                     <td><span class="badge" th:classappend="'badge-' + ${e.result()}" th:text="${e.result()}">-</span></td>
-                    <td th:text="${e.actor()}">-</td>
-                    <td class="mono" th:text="${e.ip()}">-</td>
+                    <td>
+                        <a class="subject-link" th:if="${e.actor() != null and !#strings.isEmpty(e.actor())}"
+                           th:href="@{/admin/dashboard/detail(actor=${e.actor()})}" th:text="${e.actor()}">-</a>
+                        <span th:unless="${e.actor() != null and !#strings.isEmpty(e.actor())}" class="muted">-</span>
+                    </td>
+                    <td class="mono">
+                        <a class="subject-link" th:if="${e.ip() != null and !#strings.isEmpty(e.ip())}"
+                           th:href="@{/admin/dashboard/detail(ip=${e.ip()})}" th:text="${e.ip()}">-</a>
+                        <span th:unless="${e.ip() != null and !#strings.isEmpty(e.ip())}" class="muted">-</span>
+                    </td>
                     <td class="muted">
                         <details>
                             <summary th:text="${e.detail()}">-</summary>
