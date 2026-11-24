@@ -54,11 +54,12 @@ public class BruteForceProtectionService {
 
         AegisSecurityProperties.Bruteforce bf = props.bruteforce();
         LocalDateTime windowStart = LocalDateTime.now().minusMinutes(bf.ipFailWindowMinutes());
-        // 관리자가 수동 해제한 뒤에는 그 시점부터 다시 센다(해제 직후 재차단 방지).
-        LocalDateTime effectiveStart = events.lastEventAt(AuditEventType.IP_UNBLOCKED, ip)
-                .filter(t -> t.isAfter(windowStart))
-                .orElse(windowStart);
-        long recentFailures = events.countSince(AuditEventType.LOGIN_FAILURE, ip, effectiveStart);
+        // 관리자가 수동 해제했다면 그 이후의 실패만 센다(해제 직후 재차단 방지).
+        // 경계는 시각이 아니라 감사 로그 id 로 잡는다: 같은 순간에 기록된 실패가 시각 비교(초과)에서
+        // 누락돼 재차단이 안 되는 문제가 있었다(간헐 실패 원인).
+        long recentFailures = events.lastEventId(AuditEventType.IP_UNBLOCKED, ip)
+                .map(unblockId -> events.countSinceEventId(AuditEventType.LOGIN_FAILURE, ip, unblockId, windowStart))
+                .orElseGet(() -> events.countSince(AuditEventType.LOGIN_FAILURE, ip, windowStart));
 
         if (recentFailures >= bf.ipFailThreshold() && !isBlocked(ip)) {
             block(ip, "brute-force 탐지: " + bf.ipFailWindowMinutes() + "분 내 실패 " + recentFailures + "회",

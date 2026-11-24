@@ -38,9 +38,15 @@ public class AuditService {
         return repository.countByTypeAndIpAndCreatedAtAfter(type, ip, after);
     }
 
-    /** 특정 IP의 가장 최근 해당 유형 이벤트 시각(없으면 empty). */
+    /** 특정 IP의 가장 최근 해당 유형 이벤트 id(없으면 empty). id 는 단조 증가라 순서가 정확하다. */
     @Transactional(readOnly = true)
-    public Optional<LocalDateTime> lastEventAt(AuditEventType type, String ip) {
-        return repository.findFirstByTypeAndIpOrderByCreatedAtDesc(type, ip).map(AuditLog::getCreatedAt);
+    public Optional<Long> lastEventId(AuditEventType type, String ip) {
+        return repository.findFirstByTypeAndIpOrderByIdDesc(type, ip).map(AuditLog::getId);
+    }
+
+    /** 기준 id 이후 + 시간창 안의 해당 유형 이벤트 건수(해제 이후 실패 재집계용). */
+    @Transactional(readOnly = true)
+    public long countSinceEventId(AuditEventType type, String ip, long afterId, LocalDateTime windowStart) {
+        return repository.countByTypeAndIpAndIdGreaterThanAndCreatedAtAfter(type, ip, afterId, windowStart);
     }
 }
