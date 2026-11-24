@@ -22,6 +22,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
@@ -103,6 +104,9 @@ public class SecurityConfig {
             .addFilterBefore(ipBlockFilter, WebAsyncManagerIntegrationFilter.class)
             .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+            // CSRF 토큰을 응답 전송 전에 확정 → XSRF-TOKEN 쿠키가 반드시 내려간다.
+            // (없으면 서버 렌더링 폼의 상태 변경 요청이 항상 403 이 된다)
+            .addFilterAfter(new CsrfCookieFilter(), BasicAuthenticationFilter.class)
             .httpBasic(basic -> {});
         return http.build();
     }
